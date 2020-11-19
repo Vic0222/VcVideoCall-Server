@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option csharp_namespace = "VcGrpcService";
+
+package chat;
+
+// The greeting service definition.
+service ChatRoom {
+  // Sends a greeting
+  rpc Join(stream MessageRequest) returns (stream Notification);
+}
+
+
+message Notification {
+  string room_id = 1;
+  string sender = 2;
+  string message_body = 3;
+}
+
+message MessageRequest {
+  string target = 1;
+  string sender = 2;
+  int32 type = 3;
+  string message_body = 4;
+}
+
