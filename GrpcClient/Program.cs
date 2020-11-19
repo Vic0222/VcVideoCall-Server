@@ -24,7 +24,6 @@ namespace GrpcClient
                         Console.WriteLine($"{response.Sender}: {response.MessageBody}");
                     }
                 });
-                await chat.RequestStream.WriteAsync(new MessageRequest() { Sender = "1", MessageBody = "Test Message", RoomId = "1" });
 
                 string line;
                 while ((line = Console.ReadLine()) != null)
@@ -33,7 +32,7 @@ namespace GrpcClient
                     {
                         break;
                     }
-                    await chat.RequestStream.WriteAsync(new MessageRequest() { Sender = "1", MessageBody = line, RoomId = "1" });
+                    await chat.RequestStream.WriteAsync(new MessageRequest() { Sender = "1", MessageBody = line, Target = "2", Type = 1 });
                 }
                 await chat.RequestStream.CompleteAsync();
             }
