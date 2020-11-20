@@ -14,12 +14,16 @@ namespace Vc.DAL.Mongo.Migrations
 
         public void Up(IMongoDatabase database)
         {
-            database.CreateCollection("room");
+            database.CreateCollection("rooms");
+            database.CreateCollection("messages");
+            database.CreateCollection("users");
         }
 
         public void Down(IMongoDatabase database)
         {
-            database.DropCollection("room");
+            database.DropCollection("rooms");
+            database.DropCollection("messages");
+            database.DropCollection("users"); ;
         }
 
         

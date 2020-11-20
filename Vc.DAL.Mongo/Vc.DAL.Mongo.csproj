@@ -1,16 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="10.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
     <PackageReference Include="MongoDB.Driver" Version="2.11.4" />
     <PackageReference Include="MongoDBMigrations" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Vc.Common\Vc.Common.csproj" />
     <ProjectReference Include="..\Vc.Domain\Vc.Domain.csproj" />
   </ItemGroup>
 

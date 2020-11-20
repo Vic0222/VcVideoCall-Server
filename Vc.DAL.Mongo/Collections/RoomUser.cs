@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Vc.Domain.Entities
+namespace Vc.DAL.Mongo.Collections
 {
     public class RoomUser
     {

@@ -11,7 +11,7 @@ namespace GrpcClient
         static async Task Main(string[] args)
         {
             // The port number(5001) must match the port of the gRPC server.
-            using var channel = GrpcChannel.ForAddress("http://localhost");
+            using var channel = GrpcChannel.ForAddress("http://localhost:5000");
             var client = new ChatRoom.ChatRoomClient(channel);
 
             using (var chat = client.Join())
@@ -32,7 +32,7 @@ namespace GrpcClient
                     {
                         break;
                     }
-                    await chat.RequestStream.WriteAsync(new MessageRequest() { Sender = "1", MessageBody = line, Target = "2", Type = 1 });
+                    await chat.RequestStream.WriteAsync(new MessageRequest() { Sender = "5fb7d5629c3b8e7f336dcb3c", MessageBody = line, Target = "5fb7d5629c3b8e7f336dcb3d", Type = 1 });
                 }
                 await chat.RequestStream.CompleteAsync();
             }

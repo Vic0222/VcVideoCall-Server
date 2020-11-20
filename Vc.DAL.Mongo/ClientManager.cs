@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using System;
 
@@ -6,21 +7,21 @@ namespace Vc.DAL.Mongo
 {
     public class ClientManager
     {
-        private readonly IConfiguration _configuration;
+        private readonly MongoDatabaseSetting _mongoDatabaseSetting;
 
-        public ClientManager(IConfiguration configuration)
+        public ClientManager(IOptions<MongoDatabaseSetting> mongoDatabaseSetting)
         {
-            _configuration = configuration;
+            _mongoDatabaseSetting = mongoDatabaseSetting?.Value;
         }
         public MongoClient GetMongoClient()
         {
-            return new MongoClient(_configuration.GetConnectionString("VcMongoDbConnectionString"));
+            return new MongoClient(_mongoDatabaseSetting.ConnectionString);
         }
 
         public IMongoDatabase GetDatabase()
         {
             var mongoClient = GetMongoClient();
-            return mongoClient.GetDatabase(_configuration.GetSection("Database")?.Value ?? "");
+            return mongoClient.GetDatabase(_mongoDatabaseSetting.Database ?? "");
         }
     }
 }

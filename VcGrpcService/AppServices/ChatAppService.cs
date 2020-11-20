@@ -9,7 +9,7 @@ using Vc.Domain.RepositoryInterfaces;
 
 namespace VcGrpcService.AppServices
 {
-    public class ChatAppService
+    public class ChatAppService : AbstractAppService
     {
         private ConcurrentDictionary<string, IServerStreamWriter<Notification>> onlineUsers = new ConcurrentDictionary<string, IServerStreamWriter<Notification>>();
         private readonly IRoomRepository _roomRepository;
@@ -47,7 +47,15 @@ namespace VcGrpcService.AppServices
                 //create room if not exist
                 if (room == null)
                 {
+                    User sender = await _userRepository.GetUserAsync(messageRequest?.Sender);
+                    User receiver = await _userRepository.GetUserAsync(messageRequest?.Target);
+
+
+
                     room = createRoom(messageRequest, RoomType.Private);
+                    room.RoomUsers.Add(new RoomUser() { UserId = sender?.Id, Nickname = sender?.Username });
+                    room.RoomUsers.Add(new RoomUser() { UserId = receiver?.Id, Nickname = receiver?.Username });
+
                     string roomId = await _roomRepository.AddRoomAsync(room);
                     room.Id = roomId;
                 }
@@ -60,12 +68,13 @@ namespace VcGrpcService.AppServices
 
             if (room != null)
             {
-                await _messageRepository.AddMessageAsync(createMessage(messageRequest));
+                User sender = await _userRepository.GetUserAsync(messageRequest?.Sender);
 
-                List<User> users = _userRepository.GetUsersWithRoomId(room?.Id);
-                foreach (var user in users)
+                await _messageRepository.AddMessageAsync(createMessage(messageRequest, room, sender));
+
+                foreach (var user in room.RoomUsers)
                 {
-                    if (onlineUsers.TryGetValue(user.Id, out IServerStreamWriter<Notification> stream))
+                    if (onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Notification> stream))
                     {
                         await stream.WriteAsync(createNotification(messageRequest));
                     }
@@ -83,9 +92,9 @@ namespace VcGrpcService.AppServices
             return new Notification() { RoomId = messageRequest.Target, Sender = messageRequest.Sender, MessageBody = messageRequest.MessageBody };
         }
 
-        private Message createMessage(MessageRequest messageRequest)
+        private Message createMessage(MessageRequest messageRequest, Room room, User sender)
         {
-            return new Message() { DateSent = DateTime.Now, MessageBody = messageRequest.MessageBody, RoomId = messageRequest.Target, UserId = messageRequest.Sender};
+            return new Message() { DateSent = DateTime.Now, MessageBody = messageRequest.MessageBody, Room = room, Sender = sender };
         }
 
 

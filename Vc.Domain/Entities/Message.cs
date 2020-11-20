@@ -9,8 +9,8 @@ namespace Vc.Domain.Entities
         public string Id { get; set; }
         public string MessageBody { get; set; }
         public DateTime DateSent { get; set; }
-        public string UserId { get; set; }
-        public string RoomId { get; set; }
+        public User Sender { get; set; }
+        public Room Room { get; set; }
 
     }
 }

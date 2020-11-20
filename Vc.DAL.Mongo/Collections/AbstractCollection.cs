@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Vc.DAL.Mongo
+namespace Vc.DAL.Mongo.Collections
 {
-    public class MongoDatabaseSettings
+    public abstract class AbstractCollection
     {
     }
 }
