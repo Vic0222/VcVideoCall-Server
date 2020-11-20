@@ -7,11 +7,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VcGrpcService", "VcGrpcServ
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vc.Domain", "Vc.Domain\Vc.Domain.csproj", "{29B0CDB0-BA87-4B18-A232-B5439FBBAA12}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrpcClient", "GrpcClient\GrpcClient.csproj", "{F00A7B11-EB33-4903-A94E-6722EF4577FB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcClient", "GrpcClient\GrpcClient.csproj", "{F00A7B11-EB33-4903-A94E-6722EF4577FB}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{447A60BA-934A-4A65-A5EC-4AD53629255C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vc.DAL.Mongo", "Vc.DAL.Mongo\Vc.DAL.Mongo.csproj", "{F6E64EC7-1D8F-4BA0-8404-AE558517205A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vc.DAL.Mongo", "Vc.DAL.Mongo\Vc.DAL.Mongo.csproj", "{F6E64EC7-1D8F-4BA0-8404-AE558517205A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utility", "Utility", "{B781F320-E219-46EE-82DD-4F636D8BB44B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mongo.Migration.CLI", "Utility\Mongo.Migration.Console\Mongo.Migration.CLI.csproj", "{CFD77296-4E55-4AE6-9224-9691E9AEB80B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,9 +43,16 @@ Global
 		{F6E64EC7-1D8F-4BA0-8404-AE558517205A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F6E64EC7-1D8F-4BA0-8404-AE558517205A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F6E64EC7-1D8F-4BA0-8404-AE558517205A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFD77296-4E55-4AE6-9224-9691E9AEB80B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFD77296-4E55-4AE6-9224-9691E9AEB80B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFD77296-4E55-4AE6-9224-9691E9AEB80B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFD77296-4E55-4AE6-9224-9691E9AEB80B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CFD77296-4E55-4AE6-9224-9691E9AEB80B} = {B781F320-E219-46EE-82DD-4F636D8BB44B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F8C66BA6-A6E5-4961-AFF5-0DAD2D99CC67}
