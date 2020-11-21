@@ -1,4 +1,5 @@
-﻿using Grpc.Net.Client;
+﻿using Grpc.Core;
+using Grpc.Net.Client;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,7 +15,11 @@ namespace GrpcClient
             using var channel = GrpcChannel.ForAddress("http://localhost:5000");
             var client = new ChatRoom.ChatRoomClient(channel);
 
-            using (var chat = client.Join())
+            var headers = new Metadata();
+            string token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjNlNTQyN2NkMzUxMDhiNDc2NjUyMDhlYTA0YjhjYTZjODZkMDljOTMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vdmN2aWRlb2NhbGwtYzRhMGIiLCJhdWQiOiJ2Y3ZpZGVvY2FsbC1jNGEwYiIsImF1dGhfdGltZSI6MTYwNTkzODU1OSwidXNlcl9pZCI6Ijg4TmU1ZVgyQzZaTXNHMHdaQ0FUSm5FTUZXSDMiLCJzdWIiOiI4OE5lNWVYMkM2Wk1zRzB3WkNBVEpuRU1GV0gzIiwiaWF0IjoxNjA1OTM4NTU5LCJleHAiOjE2MDU5NDIxNTksImVtYWlsIjoidi5nLmFsYm9uaWFuLmRldkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsidi5nLmFsYm9uaWFuLmRldkBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.mvw7XofWKg8AgT8PtlWBx1ngmJZ3NKSQdCko0jDz5qcc4O6J5BDGYdUy4dcPSuCkrToBvOCjyQqfjXdXOBnWa9LtEPavQWCRBSO17bvBOkuBvXZIc_z02XErNC0o4AKF72DOGCB9JMIlqopFUmN8obpLyIQthjBBVuxX4bBR0ZTNstKaefe6hoTZWs2yYDijQOyre5mmWQIQQ7cel3EbmY7k2EklV-RVfNsVHug_6B9o5uHiBzH6Wy27WeylJiUbmfXkcFrTx0oEV4mCGeth1mKhPYVK5NAk_9bfd0bbsH9yWCS4nPCQT-b--AaG4nakkM5jIu72Qdbf598OaZqqTg";
+            headers.Add("Authorization", $"Bearer {token}");
+
+            using (var chat = client.Join(headers))
             {
                 _ = Task.Run(async () =>
                 {
@@ -32,7 +37,9 @@ namespace GrpcClient
                     {
                         break;
                     }
-                    await chat.RequestStream.WriteAsync(new MessageRequest() { Sender = "5fb7d5629c3b8e7f336dcb3c", MessageBody = line, Target = "5fb7d5629c3b8e7f336dcb3d", Type = 1 });
+
+                    MessageRequest message = new MessageRequest() { Sender = "wUnSd3SPUhWngjOsXK83EkPVFyW2", MessageBody = line, Target = "88Ne5eX2C6ZMsG0wZCATJnEMFWH3", Type = 1 };
+                    await chat.RequestStream.WriteAsync(message);
                 }
                 await chat.RequestStream.CompleteAsync();
             }

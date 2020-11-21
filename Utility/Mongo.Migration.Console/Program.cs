@@ -44,10 +44,10 @@ namespace Mongo.Migration.CLI
             var database = mongoClient.GetDatabase(databaseName);
             var users = database.GetCollection<User>("users");
 
-            var user1 = new User() { Username = "Vic" };
+            var user1 = new User() { Id = "wUnSd3SPUhWngjOsXK83EkPVFyW2", Username = "Vic" };
             users.InsertOne(user1);
 
-            var user2 = new User() { Username = "Alb" };
+            var user2 = new User() { Id = "88Ne5eX2C6ZMsG0wZCATJnEMFWH3", Username = "Alb" };
             users.InsertOne(user2);
         }
     }

@@ -27,7 +27,7 @@ namespace Vc.DAL.Mongo.Repositories
             foreach (var domUser in room.RoomUsers)
             {
                 Dal.RoomUser dalRoomUser = _mapper.Map<Dal.RoomUser>(domUser);
-                dalRoom.Users.Add(dalRoomUser);
+                dalRoom.RoomUsers.Add(dalRoomUser);
             }
 
             await _collection.InsertOneAsync(dalRoom);
@@ -36,9 +36,9 @@ namespace Vc.DAL.Mongo.Repositories
 
         public async Task<Room> GetIndividualRoomAsync(string userId1, string userId2)
         {
-            var privateRooms = await _collection.FindAsync(r => r.Type == (byte)RoomType.Private && r.Users.Any(u=>u.UserId== userId1) && r.Users.Any(u => u.UserId == userId2));
+            var privateRooms = await _collection.FindAsync(r => r.Type == (byte)RoomType.Private && r.RoomUsers.Any(u=>u.UserId== userId1) && r.RoomUsers.Any(u => u.UserId == userId2));
             Dal.Room source = privateRooms.FirstOrDefault();
-            return source.IsNotNull() ? _mapper.Map<Room>(source) : null;
+            return source.IsNotNull() ? _mapper.Map<Dom.Room>(source) : null;
         }
 
         public async Task<Room> GetRoomAsync(string roomId)

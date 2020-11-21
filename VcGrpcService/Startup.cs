@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -42,16 +44,28 @@ namespace VcGrpcService
             services.AddAutoMapper(typeof(AbstractRepository<>));
             services.AddSingleton<ChatAppService>();
             services.AddTransient<ClientManager>();
-            services.Scan(scan => 
+            services.Scan(scan =>
                 scan.FromAssembliesOf(typeof(AbstractRepository<>))
-                .AddClasses(classes=>classes.AssignableTo<IRepository>())
+                .AddClasses(classes => classes.AssignableTo<IRepository>())
                 .AsImplementedInterfaces()
                 .WithTransientLifetime()
             );
 
+            services.AddAuthorization();
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.Authority = "https://securetoken.google.com/vcvideocall-c4a0b";
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = "https://securetoken.google.com/vcvideocall-c4a0b",
+                        ValidateAudience = true,
+                        ValidAudience = "vcvideocall-c4a0b",
+                        ValidateLifetime = true
+                    };
+                });
 
-            //configurations
-            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -63,6 +77,9 @@ namespace VcGrpcService
             }
 
             app.UseRouting();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

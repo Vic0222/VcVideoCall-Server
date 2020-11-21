@@ -4,11 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using VcGrpcService.AppServices;
 
 namespace VcGrpcService.Services
 {
+    [Authorize]
     public class ChatRoomService : ChatRoom.ChatRoomBase
     {
         private readonly ILogger<ChatRoomService> _logger;

@@ -11,13 +11,13 @@ namespace Vc.DAL.Mongo.Collections
     {
         public Room()
         {
-            Users = new List<RoomUser>();
+            RoomUsers = new List<RoomUser>();
         }
 
         [BsonId(IdGenerator = typeof(StringObjectIdGenerator))]
         public string Id { get; set; }
         public string Name { get; set; }
         public byte Type { get; set; }
-        public List<RoomUser> Users { get; set; }
+        public List<RoomUser> RoomUsers { get; set; }
     }
 }
