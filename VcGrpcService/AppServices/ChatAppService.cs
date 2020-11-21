@@ -33,7 +33,7 @@ namespace VcGrpcService.AppServices
             onlineUsers.TryRemove(userId, out IServerStreamWriter<Notification> stream);
         }
 
-        public async Task BroadcastMessage(MessageRequest messageRequest)
+        public async Task BroadcastMessage(string senderId, MessageRequest messageRequest)
         {
             //test broadcast to all users
             //Notification notification = new Notification() { RoomId = messageRequest.RoomId, Sender = messageRequest.Sender, MessageBody = messageRequest.MessageBody };
@@ -42,17 +42,17 @@ namespace VcGrpcService.AppServices
             if (messageRequest.Type == 1)
             {
                 //target is receiver UserId if type = 1
-                room = await _roomRepository.GetIndividualRoomAsync(messageRequest.Sender, messageRequest.Target);
+                room = await _roomRepository.GetIndividualRoomAsync(senderId, messageRequest.Target);
 
                 //create room if not exist
                 if (room == null)
                 {
-                    User sender = await _userRepository.GetUserAsync(messageRequest?.Sender);
+                    User sender = await _userRepository.GetUserAsync(senderId);
                     User receiver = await _userRepository.GetUserAsync(messageRequest?.Target);
 
 
 
-                    room = createRoom(messageRequest, RoomType.Private);
+                    room = createRoom(senderId, messageRequest?.Target, RoomType.Private);
                     room.RoomUsers.Add(new RoomUser() { UserId = sender?.Id, Nickname = sender?.Username });
                     room.RoomUsers.Add(new RoomUser() { UserId = receiver?.Id, Nickname = receiver?.Username });
 
@@ -68,7 +68,7 @@ namespace VcGrpcService.AppServices
 
             if (room != null)
             {
-                User sender = await _userRepository.GetUserAsync(messageRequest?.Sender);
+                User sender = await _userRepository.GetUserAsync(senderId);
 
                 await _messageRepository.AddMessageAsync(createMessage(messageRequest, room, sender));
 
@@ -76,20 +76,20 @@ namespace VcGrpcService.AppServices
                 {
                     if (onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Notification> stream))
                     {
-                        await stream.WriteAsync(createNotification(messageRequest));
+                        await stream.WriteAsync(createNotification(senderId, messageRequest));
                     }
                 }
             }
         }
-        public Room createRoom(MessageRequest messageRequest, RoomType roomType)
+        public Room createRoom(string senderId, string receiverId, RoomType roomType)
         {
-            string name = string.Format("{0}-{1}", messageRequest.Sender, messageRequest.Target);
+            string name = string.Format("{0}-{1}", senderId, receiverId);
             return new Room() { Name = name, Type = roomType };
         }
 
-        private  Notification createNotification(MessageRequest messageRequest)
+        private  Notification createNotification(string senderId, MessageRequest messageRequest)
         {
-            return new Notification() { RoomId = messageRequest.Target, Sender = messageRequest.Sender, MessageBody = messageRequest.MessageBody };
+            return new Notification() { RoomId = messageRequest.Target, Sender = senderId, MessageBody = messageRequest.MessageBody };
         }
 
         private Message createMessage(MessageRequest messageRequest, Room room, User sender)

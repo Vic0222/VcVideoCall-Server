@@ -23,13 +23,6 @@ namespace Vc.DAL.Mongo.Repositories
         public async Task<string> AddRoomAsync(Dom.Room room)
         {
             Dal.Room dalRoom = _mapper.Map<Dal.Room>(room);
-
-            foreach (var domUser in room.RoomUsers)
-            {
-                Dal.RoomUser dalRoomUser = _mapper.Map<Dal.RoomUser>(domUser);
-                dalRoom.RoomUsers.Add(dalRoomUser);
-            }
-
             await _collection.InsertOneAsync(dalRoom);
             return dalRoom.Id;
         }

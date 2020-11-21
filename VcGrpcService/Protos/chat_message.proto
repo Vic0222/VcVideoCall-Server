@@ -19,8 +19,7 @@ message Notification {
 
 message MessageRequest {
   string target = 1;
-  string sender = 2;
-  int32 type = 3;
-  string message_body = 4;
+  int32 type = 2;
+  string message_body = 3;
 }
 
