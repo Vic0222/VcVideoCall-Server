@@ -83,7 +83,7 @@ namespace VcGrpcService
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGrpcService<ChatRoomService>();
+                endpoints.MapGrpcService<ChatService>();
 
                 endpoints.MapGet("/", async context =>
                 {

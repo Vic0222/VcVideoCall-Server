@@ -14,12 +14,12 @@ using VcGrpcService.AppServices;
 namespace VcGrpcService.Services
 {
     [Authorize]
-    public class ChatRoomService : ChatRoom.ChatRoomBase
+    public class ChatService : Chat.ChatBase
     {
-        private readonly ILogger<ChatRoomService> _logger;
+        private readonly ILogger<ChatService> _logger;
         private ChatAppService _chatAppService;
 
-        public ChatRoomService(ILogger<ChatRoomService> logger, ChatAppService chatAppService)
+        public ChatService(ILogger<ChatService> logger, ChatAppService chatAppService)
         {
             _logger = logger;
             _chatAppService = chatAppService;
@@ -40,7 +40,7 @@ namespace VcGrpcService.Services
             _chatAppService.RemoveOnlineUser(senderId);
         }
 
-        public override async Task GetRooms(Empty request, IServerStreamWriter<RoomReply> responseStream, ServerCallContext context)
+        public override async Task GetRooms(RoomRequest request, IServerStreamWriter<RoomReply> responseStream, ServerCallContext context)
         {
             string userId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
             await _chatAppService.SendUserRoomsAsync(userId, responseStream);

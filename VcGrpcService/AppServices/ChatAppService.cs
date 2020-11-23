@@ -92,7 +92,7 @@ namespace VcGrpcService.AppServices
 
         public async Task SendUserRoomsAsync(string userId, IServerStreamWriter<RoomReply> responseStream)
         {
-            var rooms = await _roomRepository.GetUserRoomsAsync(userId);
+            var rooms = await _roomRepository.GetUserRoomsAsync(userId);    
             foreach (var room in rooms)
             {
                 await responseStream.WriteAsync(createRoomReply(room));

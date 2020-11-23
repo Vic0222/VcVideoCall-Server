@@ -2,15 +2,13 @@ syntax = "proto3";
 
 option csharp_namespace = "VcGrpcService";
 
-import "google/protobuf/empty.proto";
-
 package chat;
 
 // The greeting service definition.
-service ChatRoom {
+service Chat {
   // Sends a greeting
   rpc Join(stream MessageRequest) returns (stream Notification);
-  rpc GetRooms(google.protobuf.Empty) returns (stream RoomReply);
+  rpc GetRooms(RoomRequest) returns (stream RoomReply);
 }
 
 
@@ -25,6 +23,9 @@ message MessageRequest {
   string room_id = 2;
   RoomTypeReply type = 3;
   string message_body = 4;
+}
+
+message RoomRequest{
 }
 
 message RoomReply{
