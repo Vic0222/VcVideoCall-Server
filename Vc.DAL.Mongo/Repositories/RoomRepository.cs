@@ -27,7 +27,7 @@ namespace Vc.DAL.Mongo.Repositories
             return dalRoom.Id;
         }
 
-        public async Task<Room> GetIndividualRoomAsync(string userId1, string userId2)
+        public async Task<Room> GetPrivateRoomAsync(string userId1, string userId2)
         {
             var privateRooms = await _collection.FindAsync(r => r.Type == (byte)RoomType.Private && r.RoomUsers.Any(u=>u.UserId== userId1) && r.RoomUsers.Any(u => u.UserId == userId2));
             Dal.Room source = privateRooms.FirstOrDefault();
@@ -39,6 +39,14 @@ namespace Vc.DAL.Mongo.Repositories
             var matchRooms = await _collection.FindAsync(r => r.Id == roomId);
             Dal.Room source = matchRooms.FirstOrDefault();
             return source.IsNotNull() ? _mapper.Map<Room>(source) : null; 
+        }
+
+        public async Task<List<Room>> GetUserRoomsAsync(string userId)
+        {
+            var matchRooms = await _collection.FindAsync(r => r.RoomUsers.Any(u => u.UserId == userId));
+            var dalRooms = matchRooms.ToList();
+            return matchRooms.IsNotNull() ? _mapper.Map<List<Room>>(dalRooms) : new List<Room>();
+
         }
     }
 }

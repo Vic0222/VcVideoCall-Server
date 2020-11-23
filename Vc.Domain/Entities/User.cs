@@ -8,5 +8,6 @@ namespace Vc.Domain.Entities
     {
         public string Id { get; set; }
         public string Username { get; set; }
+        public List<RoomUser> RoomUsers { get; set; }
     }
 }

@@ -11,6 +11,7 @@ namespace Vc.Domain.RepositoryInterfaces
         Task<string> AddRoomAsync(Room room);
         Task<Room> GetRoomAsync(string roomId);
 
-        Task<Room> GetIndividualRoomAsync(string userId1, string userId2);
+        Task<Room> GetPrivateRoomAsync(string userId1, string userId2);
+        Task<List<Room>> GetUserRoomsAsync(string userId);
     }
 }

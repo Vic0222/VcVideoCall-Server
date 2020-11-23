@@ -14,6 +14,7 @@ namespace Vc.Domain.Entities
         public string Id { get; set; }
         public string Name { get; set; }
         public RoomType Type { get; set; }
+        public string LastMessage { get; set; }
         public List<RoomUser> RoomUsers { get; set; }
 
     }

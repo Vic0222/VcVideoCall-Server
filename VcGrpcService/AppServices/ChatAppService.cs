@@ -1,10 +1,13 @@
 ﻿using Grpc.Core;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Vc.Common;
 using Vc.Domain.Entities;
+using Vc.Domain.Exceptions;
 using Vc.Domain.RepositoryInterfaces;
 
 namespace VcGrpcService.AppServices
@@ -12,17 +15,19 @@ namespace VcGrpcService.AppServices
     public class ChatAppService : AbstractAppService
     {
         private ConcurrentDictionary<string, IServerStreamWriter<Notification>> onlineUsers = new ConcurrentDictionary<string, IServerStreamWriter<Notification>>();
+        private readonly ILogger<ChatAppService> _logger;
         private readonly IRoomRepository _roomRepository;
         private readonly IMessageRepository _messageRepository;
         private readonly IUserRepository _userRepository;
 
-        public ChatAppService(IRoomRepository roomRepository, IMessageRepository messageRepository, IUserRepository userRepository)
+        public ChatAppService(ILogger<ChatAppService> logger, IRoomRepository roomRepository, IMessageRepository messageRepository, IUserRepository userRepository)
         {
+            _logger = logger;
             _roomRepository = roomRepository;
             _messageRepository = messageRepository;
             _userRepository = userRepository;
         }
-        
+
         public void AddOnlineUser(string userId, IServerStreamWriter<Notification> responseStream)
         {
             onlineUsers.TryAdd(userId, responseStream);
@@ -35,41 +40,44 @@ namespace VcGrpcService.AppServices
 
         public async Task BroadcastMessage(string senderId, MessageRequest messageRequest)
         {
-            //test broadcast to all users
-            //Notification notification = new Notification() { RoomId = messageRequest.RoomId, Sender = messageRequest.Sender, MessageBody = messageRequest.MessageBody };
-            Room room = null;
-            // 1 = PM, 2 = Group
-            if (messageRequest.Type == 1)
+            //get and validate sender early
+            User sender = await _userRepository.GetUserAsync(senderId);
+            if (sender.IsNull())
             {
-                //target is receiver UserId if type = 1
-                room = await _roomRepository.GetIndividualRoomAsync(senderId, messageRequest.Target);
+                _logger.LogError("Sender with id : {0} not found. throwing exeption.", senderId);
+                throw new UserNotFoundExeption("Sender not found");
+            }
 
-                //create room if not exist
-                if (room == null)
+            Room room;
+
+            if (messageRequest.Type == RoomTypeReply.Private && messageRequest.RoomId.IsNull())
+            {
+                //get and validate receiver 
+                User receiver = await _userRepository.GetUserAsync(messageRequest?.Target);
+                if (receiver.IsNull())
                 {
-                    User sender = await _userRepository.GetUserAsync(senderId);
-                    User receiver = await _userRepository.GetUserAsync(messageRequest?.Target);
-
-
-
-                    room = createRoom(senderId, messageRequest?.Target, RoomType.Private);
-                    room.RoomUsers.Add(new RoomUser() { UserId = sender?.Id, Nickname = sender?.Username });
-                    room.RoomUsers.Add(new RoomUser() { UserId = receiver?.Id, Nickname = receiver?.Username });
-
-                    string roomId = await _roomRepository.AddRoomAsync(room);
-                    room.Id = roomId;
+                    _logger.LogError("Receiver with id : {0} not found. throwing exeption.", messageRequest?.Target);
+                    throw new UserNotFoundExeption("Receiver not found");
                 }
+
+                room = createRoom(senderId, messageRequest?.Target, RoomType.Private);
+                room.RoomUsers.Add(new RoomUser() { UserId = sender?.Id, Nickname = sender?.Username });
+                room.RoomUsers.Add(new RoomUser() { UserId = receiver?.Id, Nickname = receiver?.Username });
+
+                room.Id = await _roomRepository.AddRoomAsync(room);
+
             }
-            else if(messageRequest.Type == 2)
+            else
             {
-                //target is roomId if type = 2
-                room = await _roomRepository.GetRoomAsync(messageRequest.Target);
+                room = await _roomRepository.GetRoomAsync(messageRequest.RoomId);
             }
 
-            if (room != null)
+            if (room.IsNull())
             {
-                User sender = await _userRepository.GetUserAsync(senderId);
-
+                _logger.LogError("Room with id : {0} not found.", messageRequest?.Target);
+            }
+            else
+            {
                 await _messageRepository.AddMessageAsync(createMessage(messageRequest, room, sender));
 
                 foreach (var user in room.RoomUsers)
@@ -81,13 +89,41 @@ namespace VcGrpcService.AppServices
                 }
             }
         }
+
+        public async Task SendUserRoomsAsync(string userId, IServerStreamWriter<RoomReply> responseStream)
+        {
+            var rooms = await _roomRepository.GetUserRoomsAsync(userId);
+            foreach (var room in rooms)
+            {
+                await responseStream.WriteAsync(createRoomReply(room));
+            }
+        }
+
+        private RoomReply createRoomReply(Room room)
+        {
+            return new RoomReply() { Id = room.Id, Name = room.Name, LastMessage = room.LastMessage, Type = covertRoomType(room.Type) };
+        }
+
+        private RoomTypeReply covertRoomType(RoomType roomType)
+        {
+            switch (roomType)
+            {
+                case RoomType.Private:
+                    return RoomTypeReply.Private;
+                case RoomType.Group:
+                    return RoomTypeReply.Group;
+                default:
+                    return RoomTypeReply.Unknown;
+            }
+        }
+
         public Room createRoom(string senderId, string receiverId, RoomType roomType)
         {
             string name = string.Format("{0}-{1}", senderId, receiverId);
             return new Room() { Name = name, Type = roomType };
         }
 
-        private  Notification createNotification(string senderId, MessageRequest messageRequest)
+        private Notification createNotification(string senderId, MessageRequest messageRequest)
         {
             return new Notification() { RoomId = messageRequest.Target, Sender = senderId, MessageBody = messageRequest.MessageBody };
         }

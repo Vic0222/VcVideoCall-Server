@@ -40,5 +40,10 @@ namespace VcGrpcService.Services
             _chatAppService.RemoveOnlineUser(senderId);
         }
 
+        public override async Task GetRooms(Empty request, IServerStreamWriter<RoomReply> responseStream, ServerCallContext context)
+        {
+            string userId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await _chatAppService.SendUserRoomsAsync(userId, responseStream);
+        }
     }
 }

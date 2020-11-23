@@ -6,6 +6,7 @@ namespace Vc.Domain.Entities
 {
     public class RoomUser
     {
+        public string RoomId { get; set; }
         public string UserId { get; set; }
         public string Nickname { get; set; }
     }

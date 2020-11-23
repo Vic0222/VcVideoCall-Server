@@ -7,6 +7,7 @@ namespace Vc.Domain.Entities
     [Flags]
     public enum RoomType : byte
     {
+        Unknown = 0,
         Private = 1,
         Group = 2
     }
