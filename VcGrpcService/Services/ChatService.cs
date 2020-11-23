@@ -32,18 +32,22 @@ namespace VcGrpcService.Services
             string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
             do
             {
-                
                 _chatAppService.AddOnlineUser(senderId, responseStream);
-                await _chatAppService.BroadcastMessage(senderId, requestStream.Current);
+                await _chatAppService.BroadcastMessage(senderId, requestStream.Current).ContinueWith(t=> {
+                    if (t.IsFaulted)
+                    {
+                        _logger.LogError(t.Exception, "Broadcast error");
+                    }
+                    
+                });
             } while (await requestStream.MoveNext());
 
             _chatAppService.RemoveOnlineUser(senderId);
         }
-
-        public override async Task GetRooms(RoomRequest request, IServerStreamWriter<RoomReply> responseStream, ServerCallContext context)
+        public override async Task<RoomListReply> GetRooms(RoomRequest request, ServerCallContext context)
         {
             string userId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
-            await _chatAppService.SendUserRoomsAsync(userId, responseStream);
+            return await _chatAppService.SendUserRoomsAsync(userId);
         }
     }
 }

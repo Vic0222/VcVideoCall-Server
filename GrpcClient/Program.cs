@@ -13,10 +13,10 @@ namespace GrpcClient
         {
             // The port number(5001) must match the port of the gRPC server.
             using var channel = GrpcChannel.ForAddress("http://localhost:5000");
-            var client = new ChatRoom.ChatRoomClient(channel);
+            var client = new Chat.ChatClient(channel);
 
             var headers = new Metadata();
-            string token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjNlNTQyN2NkMzUxMDhiNDc2NjUyMDhlYTA0YjhjYTZjODZkMDljOTMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vdmN2aWRlb2NhbGwtYzRhMGIiLCJhdWQiOiJ2Y3ZpZGVvY2FsbC1jNGEwYiIsImF1dGhfdGltZSI6MTYwNTk0MjUyMCwidXNlcl9pZCI6Ijg4TmU1ZVgyQzZaTXNHMHdaQ0FUSm5FTUZXSDMiLCJzdWIiOiI4OE5lNWVYMkM2Wk1zRzB3WkNBVEpuRU1GV0gzIiwiaWF0IjoxNjA1OTQyNTIwLCJleHAiOjE2MDU5NDYxMjAsImVtYWlsIjoidi5nLmFsYm9uaWFuLmRldkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsidi5nLmFsYm9uaWFuLmRldkBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.BWS-3FJemqUK6YAhFPhuaZKCKwu3LjvIWoCSccwp7m1hONsLZb6alE15QKKTxOUZSAB0vrhFpcIoKN_cUBP4fgqGzjJrzs7rb9aOeN5HKzHbBIhPSpB_j-o9fUmS4-SOTm8fi9R9oGOOeocQGeAIrnYmJdbGZOYSXMZPEbWeBjSjcbjAdUGVYiOD6b0_mun751-3aZgDUpBZDkTLGgJfi2GrvH-RNH-Fo0PJXwAYZmdeA1LTWGf_VOOVWnFBVs4wzuJYP8r85LZ87oIgJ-WmUc8WkotFlrzDVxtpWO1dbTbgDeCzJUry8urru_jso89llkORRWn7mk_l-DH5BfHgEg";
+            string token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjNlNTQyN2NkMzUxMDhiNDc2NjUyMDhlYTA0YjhjYTZjODZkMDljOTMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vdmN2aWRlb2NhbGwtYzRhMGIiLCJhdWQiOiJ2Y3ZpZGVvY2FsbC1jNGEwYiIsImF1dGhfdGltZSI6MTYwNjE1MDkzOCwidXNlcl9pZCI6IndVblNkM1NQVWhXbmdqT3NYSzgzRWtQVkZ5VzIiLCJzdWIiOiJ3VW5TZDNTUFVoV25nak9zWEs4M0VrUFZGeVcyIiwiaWF0IjoxNjA2MTUwOTM4LCJleHAiOjE2MDYxNTQ1MzgsImVtYWlsIjoidi5nLmFsYm9uaWFuQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJ2LmcuYWxib25pYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.JnirYul0u36J8KX4-OT8GnYoZB8X179igNR_AtNreAMFOJuUQJDsYJJaB0AySIl8-hS5GVgtwJ8q91FD168wLx8-UpgXRZzxk2Bzjt5qrXxHkklRetR_ZFQwSWgUl7HE0ZHhOneF1zjNWoZiCS2c6qWNm0ZXi-zn3wby_mvGUff6WUdWXF1vOscVYmum4ETINA662iM1JKmQ3Vl_bmEOsupCxZiVFCtBu-6k4RG9iqvWiyCBdv0n-oAgtmaPFJg47M8dIpKok9GwhP_br7SO81dANkIJsvqndjExuO2BowzuJI-9IdNpQK_acB8Pt55tP-oO4Jiy_xX-Lnxcl1xz3g";
             headers.Add("Authorization", $"Bearer {token}");
 
             using (var chat = client.Join(headers))
@@ -38,7 +38,7 @@ namespace GrpcClient
                         break;
                     }
 
-                    MessageRequest message = new MessageRequest() { MessageBody = line, Target = "wUnSd3SPUhWngjOsXK83EkPVFyW2", Type = 1 };
+                    MessageRequest message = new MessageRequest() { MessageBody = line, Target = "88Ne5eX2C6ZMsG0wZCATJnEMFWH3", Type = RoomTypeReply.Private };
                     await chat.RequestStream.WriteAsync(message);
                 }
                 await chat.RequestStream.CompleteAsync();

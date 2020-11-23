@@ -30,6 +30,8 @@ namespace VcGrpcService.AppServices
 
         public void AddOnlineUser(string userId, IServerStreamWriter<Notification> responseStream)
         {
+            //remove first if already existing to refresh
+            onlineUsers.TryRemove(userId, out _);
             onlineUsers.TryAdd(userId, responseStream);
         }
 
@@ -50,7 +52,7 @@ namespace VcGrpcService.AppServices
 
             Room room;
 
-            if (messageRequest.Type == RoomTypeReply.Private && messageRequest.RoomId.IsNull())
+            if (messageRequest.Type == RoomTypeReply.Private && string.IsNullOrEmpty(messageRequest.RoomId))
             {
                 //get and validate receiver 
                 User receiver = await _userRepository.GetUserAsync(messageRequest?.Target);
@@ -84,19 +86,31 @@ namespace VcGrpcService.AppServices
                 {
                     if (onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Notification> stream))
                     {
-                        await stream.WriteAsync(createNotification(senderId, messageRequest));
+                        try
+                        {
+                            await stream.WriteAsync(createNotification(senderId, messageRequest));
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Stream write error removing user from online users" );
+                            onlineUsers.TryRemove(user.UserId, out _);
+                        }
+                        
                     }
                 }
             }
         }
 
-        public async Task SendUserRoomsAsync(string userId, IServerStreamWriter<RoomReply> responseStream)
+        public async Task<RoomListReply> SendUserRoomsAsync(string userId)
         {
-            var rooms = await _roomRepository.GetUserRoomsAsync(userId);    
+            var rooms = await _roomRepository.GetUserRoomsAsync(userId);
+            var roomList = new RoomListReply();
             foreach (var room in rooms)
             {
-                await responseStream.WriteAsync(createRoomReply(room));
+                roomList.Rooms.Add(createRoomReply(room));
             }
+            
+            return roomList;
         }
 
         private RoomReply createRoomReply(Room room)

@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="..\VcGrpcService\Protos\chat_message.proto" GrpcServices="Client">
-      <Link>Protos\chat_message.proto</Link>
+    <Protobuf Include="..\VcGrpcService\Protos\chat.proto" GrpcServices="Client">
+      <Link>Protos\chat.proto</Link>
     </Protobuf>
   </ItemGroup>
 

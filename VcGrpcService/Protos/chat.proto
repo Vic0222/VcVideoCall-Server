@@ -8,7 +8,7 @@ package chat;
 service Chat {
   // Sends a greeting
   rpc Join(stream MessageRequest) returns (stream Notification);
-  rpc GetRooms(RoomRequest) returns (stream RoomReply);
+  rpc GetRooms(RoomRequest) returns (RoomListReply);
 }
 
 
@@ -26,6 +26,10 @@ message MessageRequest {
 }
 
 message RoomRequest{
+}
+
+message RoomListReply{
+  repeated RoomReply rooms = 1;
 }
 
 message RoomReply{
