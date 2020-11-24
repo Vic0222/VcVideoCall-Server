@@ -14,7 +14,7 @@ namespace VcGrpcService.AppServices
 {
     public class ChatAppService : AbstractAppService
     {
-        private ConcurrentDictionary<string, IServerStreamWriter<Notification>> onlineUsers = new ConcurrentDictionary<string, IServerStreamWriter<Notification>>();
+        private ConcurrentDictionary<string, IServerStreamWriter<JoinReply>> onlineUsers = new ConcurrentDictionary<string, IServerStreamWriter<JoinReply>>();
         private readonly ILogger<ChatAppService> _logger;
         private readonly IRoomRepository _roomRepository;
         private readonly IMessageRepository _messageRepository;
@@ -28,8 +28,9 @@ namespace VcGrpcService.AppServices
             _userRepository = userRepository;
         }
 
-        public void AddOnlineUser(string userId, IServerStreamWriter<Notification> responseStream)
+        public void AddOnlineUser(string userId, IServerStreamWriter<JoinReply> responseStream)
         {
+            _logger.LogDebug("Adding user to online users. userId : {0}", userId);
             //remove first if already existing to refresh
             onlineUsers.TryRemove(userId, out _);
             onlineUsers.TryAdd(userId, responseStream);
@@ -37,11 +38,13 @@ namespace VcGrpcService.AppServices
 
         public void RemoveOnlineUser(string userId)
         {
-            onlineUsers.TryRemove(userId, out IServerStreamWriter<Notification> stream);
+            _logger.LogDebug("Removing user from online users. userId : {0}", userId);
+            onlineUsers.TryRemove(userId, out IServerStreamWriter<JoinReply> stream);
         }
 
         public async Task BroadcastMessage(string senderId, MessageRequest messageRequest)
         {
+            _logger.LogDebug("Broadcasting message from {0}", senderId);
             //get and validate sender early
             User sender = await _userRepository.GetUserAsync(senderId);
             if (sender.IsNull())
@@ -51,7 +54,7 @@ namespace VcGrpcService.AppServices
             }
 
             Room room;
-
+            //check if private message
             if (messageRequest.Type == RoomTypeReply.Private && string.IsNullOrEmpty(messageRequest.RoomId))
             {
                 //get and validate receiver 
@@ -62,11 +65,19 @@ namespace VcGrpcService.AppServices
                     throw new UserNotFoundExeption("Receiver not found");
                 }
 
-                room = createRoom(senderId, messageRequest?.Target, RoomType.Private);
-                room.RoomUsers.Add(new RoomUser() { UserId = sender?.Id, Nickname = sender?.Username });
-                room.RoomUsers.Add(new RoomUser() { UserId = receiver?.Id, Nickname = receiver?.Username });
+                //get private room
+                room = await _roomRepository.GetPrivateRoomAsync(senderId, messageRequest?.Target);
 
-                room.Id = await _roomRepository.AddRoomAsync(room);
+                if (room == null)
+                {
+                    _logger.LogInformation("Creating private room for {0} and {1}", senderId, messageRequest?.Target);
+
+                    room = createRoom(senderId, messageRequest?.Target, RoomType.Private);
+                    room.RoomUsers.Add(new RoomUser() { UserId = sender?.Id, Nickname = sender?.Username });
+                    room.RoomUsers.Add(new RoomUser() { UserId = receiver?.Id, Nickname = receiver?.Username });
+
+                    room.Id = await _roomRepository.AddRoomAsync(room);
+                }
 
             }
             else
@@ -84,7 +95,7 @@ namespace VcGrpcService.AppServices
 
                 foreach (var user in room.RoomUsers)
                 {
-                    if (onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Notification> stream))
+                    if (onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<JoinReply> stream))
                     {
                         try
                         {
@@ -105,17 +116,19 @@ namespace VcGrpcService.AppServices
         {
             var rooms = await _roomRepository.GetUserRoomsAsync(userId);
             var roomList = new RoomListReply();
-            foreach (var room in rooms)
-            {
-                roomList.Rooms.Add(createRoomReply(room));
-            }
+                foreach (var room in rooms)
+                {
+                    roomList.Rooms.Add(createRoomReply(room));
+                }
+            
             
             return roomList;
         }
 
         private RoomReply createRoomReply(Room room)
         {
-            return new RoomReply() { Id = room.Id, Name = room.Name, LastMessage = room.LastMessage, Type = covertRoomType(room.Type) };
+            long unixTimestamp = room.LastMessageDatetime.IsValid() ? ((DateTimeOffset)room.LastMessageDatetime).ToUnixTimeSeconds() : 0;
+            return new RoomReply() { Id = room.Id, Name = room.Name, Type = covertRoomType(room.Type),  LastMessage = room.LastMessage ?? string.Empty, LastMessageDatetime = unixTimestamp };
         }
 
         private RoomTypeReply covertRoomType(RoomType roomType)
@@ -137,9 +150,10 @@ namespace VcGrpcService.AppServices
             return new Room() { Name = name, Type = roomType };
         }
 
-        private Notification createNotification(string senderId, MessageRequest messageRequest)
+        private JoinReply createNotification(string senderId, MessageRequest messageRequest)
         {
-            return new Notification() { RoomId = messageRequest.Target, Sender = senderId, MessageBody = messageRequest.MessageBody };
+            Notification notification = new Notification() { RoomId = messageRequest.Target, Sender = senderId, MessageBody = messageRequest.MessageBody };
+            return new JoinReply() { Notification = notification };
         }
 
         private Message createMessage(MessageRequest messageRequest, Room room, User sender)

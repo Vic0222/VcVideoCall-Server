@@ -7,10 +7,20 @@ package chat;
 // The greeting service definition.
 service Chat {
   // Sends a greeting
-  rpc Join(stream MessageRequest) returns (stream Notification);
+  rpc Join(stream JoinRequest) returns (stream JoinReply);
   rpc GetRooms(RoomRequest) returns (RoomListReply);
 }
 
+message JoinRequest{
+  bool initial = 1;
+  MessageRequest message_request = 2;
+}
+
+
+message JoinReply{
+  bool confirmation = 1;
+  Notification notification = 2;
+}
 
 message Notification {
   string room_id = 1;
@@ -37,6 +47,7 @@ message RoomReply{
   string name = 2;
   RoomTypeReply type = 3;
   string last_message = 4;
+  int64 last_message_datetime = 5;
 }
 
 enum RoomTypeReply {

@@ -6,14 +6,19 @@ namespace Vc.Common
 {
     public static class Extensions
     {
-        public static bool IsNull<T>(this T Object)
+        public static bool IsNull<T>(this T obj)
         {
-            return Object == null;
+            return obj == null;
         }
 
-        public static bool IsNotNull<T>(this T Object)
+        public static bool IsNotNull<T>(this T obj)
         {
-            return !Object.IsNull();
+            return !obj.IsNull();
+        }
+
+        public static bool IsValid(this DateTime datetime)
+        {
+            return datetime.Year >= 1990;
         }
     }
 }

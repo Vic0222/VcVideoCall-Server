@@ -16,7 +16,7 @@ namespace GrpcClient
             var client = new Chat.ChatClient(channel);
 
             var headers = new Metadata();
-            string token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjNlNTQyN2NkMzUxMDhiNDc2NjUyMDhlYTA0YjhjYTZjODZkMDljOTMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vdmN2aWRlb2NhbGwtYzRhMGIiLCJhdWQiOiJ2Y3ZpZGVvY2FsbC1jNGEwYiIsImF1dGhfdGltZSI6MTYwNjE1MDkzOCwidXNlcl9pZCI6IndVblNkM1NQVWhXbmdqT3NYSzgzRWtQVkZ5VzIiLCJzdWIiOiJ3VW5TZDNTUFVoV25nak9zWEs4M0VrUFZGeVcyIiwiaWF0IjoxNjA2MTUwOTM4LCJleHAiOjE2MDYxNTQ1MzgsImVtYWlsIjoidi5nLmFsYm9uaWFuQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJ2LmcuYWxib25pYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.JnirYul0u36J8KX4-OT8GnYoZB8X179igNR_AtNreAMFOJuUQJDsYJJaB0AySIl8-hS5GVgtwJ8q91FD168wLx8-UpgXRZzxk2Bzjt5qrXxHkklRetR_ZFQwSWgUl7HE0ZHhOneF1zjNWoZiCS2c6qWNm0ZXi-zn3wby_mvGUff6WUdWXF1vOscVYmum4ETINA662iM1JKmQ3Vl_bmEOsupCxZiVFCtBu-6k4RG9iqvWiyCBdv0n-oAgtmaPFJg47M8dIpKok9GwhP_br7SO81dANkIJsvqndjExuO2BowzuJI-9IdNpQK_acB8Pt55tP-oO4Jiy_xX-Lnxcl1xz3g";
+            string token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjNlNTQyN2NkMzUxMDhiNDc2NjUyMDhlYTA0YjhjYTZjODZkMDljOTMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vdmN2aWRlb2NhbGwtYzRhMGIiLCJhdWQiOiJ2Y3ZpZGVvY2FsbC1jNGEwYiIsImF1dGhfdGltZSI6MTYwNjIyMDIxMSwidXNlcl9pZCI6IndVblNkM1NQVWhXbmdqT3NYSzgzRWtQVkZ5VzIiLCJzdWIiOiJ3VW5TZDNTUFVoV25nak9zWEs4M0VrUFZGeVcyIiwiaWF0IjoxNjA2MjIwMjExLCJleHAiOjE2MDYyMjM4MTEsImVtYWlsIjoidi5nLmFsYm9uaWFuQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJ2LmcuYWxib25pYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.sVd85pdw4BldjYCOVWNKwqa3QEdFSLq_I0ty8DC6G002ZlZG_uYRV3ILgQPedZGCYc5X5TS2FsyyC9DLG9cca2omgjfig1pZqcQhflBUZUS2oJSwyNNqU_mapyAEmir1z6N9rwVrIxJtCLASP8v6ORXd6iY_1l1hDb4Yc__3YrLjFpJpt8nXAR5QRwh-5giS2JcUJYKmOLA8lVxQ4pmnAELLffk8JqdExp4iFkdMNFzs8oM0dDED372Y0YXLuI4EKK-77qoK3481DAeGY6pKw2qO1zIHyhQYP44dJOG8mySOkdM2GndyWz_NzyHOpbxsiDExDAoCZrBT560fWncIfA";
             headers.Add("Authorization", $"Bearer {token}");
 
             using (var chat = client.Join(headers))
@@ -26,7 +26,7 @@ namespace GrpcClient
                     while (await chat.ResponseStream.MoveNext(cancellationToken: CancellationToken.None))
                     {
                         var response = chat.ResponseStream.Current;
-                        Console.WriteLine($"{response.Sender}: {response.MessageBody}");
+                        Console.WriteLine($"{response.Notification.Sender}: {response.Notification.MessageBody}");
                     }
                 });
 
@@ -39,7 +39,8 @@ namespace GrpcClient
                     }
 
                     MessageRequest message = new MessageRequest() { MessageBody = line, Target = "88Ne5eX2C6ZMsG0wZCATJnEMFWH3", Type = RoomTypeReply.Private };
-                    await chat.RequestStream.WriteAsync(message);
+                    JoinRequest joinRequest = new JoinRequest() { MessageRequest = message };
+                    await chat.RequestStream.WriteAsync(joinRequest);
                 }
                 await chat.RequestStream.CompleteAsync();
             }
