@@ -13,5 +13,6 @@ namespace Vc.Domain.RepositoryInterfaces
 
         Task<Room> GetPrivateRoomAsync(string userId1, string userId2);
         Task<List<Room>> GetUserRoomsAsync(string userId);
+        Task<bool> IsUserInRoomAsync(string userId, string roomId);
     }
 }

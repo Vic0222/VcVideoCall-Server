@@ -48,5 +48,11 @@ namespace Vc.DAL.Mongo.Repositories
             return matchRooms.IsNotNull() ? _mapper.Map<List<Room>>(dalRooms) : new List<Room>();
 
         }
+
+        public async Task<bool> IsUserInRoomAsync(string userId, string roomId)
+        {
+            var room = await _collection.FindAsync(r => r.Id == roomId && r.RoomUsers.Any(ru => ru.UserId == userId));
+            return room.IsNotNull();
+        }
     }
 }

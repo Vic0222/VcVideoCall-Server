@@ -14,22 +14,22 @@ service Chat {
 
 message JoinRequest{
   bool initial = 1;
-  Message message = 2;
+  MessageRequest message_request = 2;
 }
 
 
 message JoinResponse{
   bool confirmation = 1;
-  Notification notification = 2;
+  MessageNotification message_notification = 2;
 }
 
-message Notification {
+message MessageNotification {
   string room_id = 1;
   string sender = 2;
   string message_body = 3;
 }
 
-message Message {
+message MessageRequest {
   string target = 1;
   string room_id = 2;
   RoomType type = 3;
@@ -58,17 +58,15 @@ enum RoomType {
 }
 
 message GetMessagesRequest{
-  string id = 1;
-  string name = 2;
-  RoomType type = 3;
-  string last_message = 4;
-  int64 last_message_datetime = 5;
+  string room_id = 1;
 }
 
 message GetMessagesResponse{
-  string id = 1;
-  string name = 2;
-  RoomType type = 3;
-  string last_message = 4;
-  int64 last_message_datetime = 5;
+  repeated Message messages = 1;
+}
+
+message Message {
+  string room_id = 1;
+  string message_body = 2;
+  string sender_id = 3;
 }

@@ -43,7 +43,7 @@ namespace VcGrpcService.AppServices
             onlineUsers.TryRemove(userId, out IServerStreamWriter<Proto.JoinResponse> stream);
         }
 
-        public async Task BroadcastMessage(string senderId, Proto.Message message)
+        public async Task BroadcastMessage(string senderId, Proto.MessageRequest message)
         {
             _logger.LogDebug("Broadcasting message from {0}", senderId);
             //get and validate sender early
@@ -113,6 +113,25 @@ namespace VcGrpcService.AppServices
             }
         }
 
+        public async Task<Proto.GetMessagesResponse> GetMessagesByRoomIdOfUser(string roomId)
+        {
+            List<Message> messages = await _messageRepository.GetMessagesByRoomIdOfUserAsync(roomId);
+
+            var response = new Proto.GetMessagesResponse();
+            foreach (var message in messages)
+            {
+                response.Messages.Add(new Proto.Message() { RoomId = message.RoomId, SenderId = message.SenderId, MessageBody = message.MessageBody });
+            }
+            return response;
+
+        }
+
+        public async Task<bool> IsUserInRoomAsync(string userId, string roomId)
+        {
+            //validate if user is in room
+            return await _roomRepository.IsUserInRoomAsync(userId, roomId);
+        }
+
         public async Task<Proto.GetRoomsResponse> SendUserRoomsAsync(string userId)
         {
             var rooms = await _roomRepository.GetUserRoomsAsync(userId);
@@ -149,13 +168,13 @@ namespace VcGrpcService.AppServices
             return new Room() { Name = name, Type = roomType };
         }
 
-        private Proto.JoinResponse createNotification(string senderId, Proto.Message messageRequest)
+        private Proto.JoinResponse createNotification(string senderId, Proto.MessageRequest messageRequest)
         {
-            Proto.Notification notification = new Proto.Notification() { RoomId = messageRequest.Target, Sender = senderId, MessageBody = messageRequest.MessageBody };
-            return new Proto.JoinResponse() { Notification = notification };
+            Proto.MessageNotification notification = new Proto.MessageNotification() { RoomId = messageRequest.Target, Sender = senderId, MessageBody = messageRequest.MessageBody };
+            return new Proto.JoinResponse() { MessageNotification = notification };
         }
 
-        private Message createMessage(Proto.Message messageRequest, Room room, User sender)
+        private Message createMessage(Proto.MessageRequest messageRequest, Room room, User sender)
         {
             return new Message() { DateSent = DateTime.Now, MessageBody = messageRequest.MessageBody, Room = room, Sender = sender };
         }

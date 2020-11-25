@@ -39,7 +39,7 @@ namespace VcGrpcService.Services
                 }
                 else
                 {
-                    await _chatAppService.BroadcastMessage(senderId, requestStream.Current?.Message).ContinueWith(t => {
+                    await _chatAppService.BroadcastMessage(senderId, requestStream.Current?.MessageRequest).ContinueWith(t => {
                         if (t.IsFaulted)
                         {
                             _logger.LogError(t.Exception, "Broadcast error");
@@ -64,6 +64,25 @@ namespace VcGrpcService.Services
                 throw;
             }
             
+        }
+        public async override Task<GetMessagesResponse> GetMessages(GetMessagesRequest request, ServerCallContext context)
+        {
+            try
+            {
+                string userId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
+                bool isInRoom = await _chatAppService.IsUserInRoomAsync(userId, request.RoomId);
+                if (!isInRoom)
+                {
+                    throw new RpcException(new Status(StatusCode.PermissionDenied, "Room access denied"));
+                }
+                return await _chatAppService.GetMessagesByRoomIdOfUser(request.RoomId);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Get Messages error");
+                throw;
+            }
         }
     }
 }

@@ -23,5 +23,11 @@ namespace Vc.DAL.Mongo.Repositories
             var dalMessage = _mapper.Map<Dal.Message>(domMessage);
             await _collection.InsertOneAsync(dalMessage);
         }
+
+        public async Task<List<Message>> GetMessagesByRoomIdOfUserAsync(string roomId)
+        {
+            var dalMessages = await _collection.FindAsync<Dal.Message>(m => m.RoomId == roomId);
+            return _mapper.Map<List<Message>>(dalMessages);
+        }
     }
 }
