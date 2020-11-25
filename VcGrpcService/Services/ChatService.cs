@@ -9,8 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using Vc.Common;
 using VcGrpcService.AppServices;
-
-
+using VcGrpcService.Proto;
 
 namespace VcGrpcService.Services
 {
@@ -27,7 +26,7 @@ namespace VcGrpcService.Services
 
         }
 
-        public override async Task Join(IAsyncStreamReader<JoinRequest> requestStream, IServerStreamWriter<JoinReply> responseStream, ServerCallContext context)
+        public override async Task Join(IAsyncStreamReader<JoinRequest> requestStream, IServerStreamWriter<Proto.JoinResponse> responseStream, ServerCallContext context)
         {
             if (!await requestStream.MoveNext()) return;
             string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -36,11 +35,11 @@ namespace VcGrpcService.Services
                 _chatAppService.AddOnlineUser(senderId, responseStream);
                 if (requestStream.Current.Initial)
                 {
-                    await responseStream.WriteAsync(new JoinReply() { Confirmation = true });
+                    await responseStream.WriteAsync(new Proto.JoinResponse() { Confirmation = true });
                 }
                 else
                 {
-                    await _chatAppService.BroadcastMessage(senderId, requestStream.Current?.MessageRequest).ContinueWith(t => {
+                    await _chatAppService.BroadcastMessage(senderId, requestStream.Current?.Message).ContinueWith(t => {
                         if (t.IsFaulted)
                         {
                             _logger.LogError(t.Exception, "Broadcast error");
@@ -52,7 +51,7 @@ namespace VcGrpcService.Services
 
             _chatAppService.RemoveOnlineUser(senderId);
         }
-        public override async Task<RoomListReply> GetRooms(RoomRequest request, ServerCallContext context)
+        public override async Task<GetRoomsResponse> GetRooms(GetRoomsRequest request, ServerCallContext context)
         {
             try
             {

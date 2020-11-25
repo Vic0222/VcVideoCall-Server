@@ -9,12 +9,13 @@ using Vc.Common;
 using Vc.Domain.Entities;
 using Vc.Domain.Exceptions;
 using Vc.Domain.RepositoryInterfaces;
+using Proto = VcGrpcService.Proto;
 
 namespace VcGrpcService.AppServices
 {
     public class ChatAppService : AbstractAppService
     {
-        private ConcurrentDictionary<string, IServerStreamWriter<JoinReply>> onlineUsers = new ConcurrentDictionary<string, IServerStreamWriter<JoinReply>>();
+        private ConcurrentDictionary<string, IServerStreamWriter<Proto.JoinResponse>> onlineUsers = new ConcurrentDictionary<string, IServerStreamWriter<Proto.JoinResponse>>();
         private readonly ILogger<ChatAppService> _logger;
         private readonly IRoomRepository _roomRepository;
         private readonly IMessageRepository _messageRepository;
@@ -28,7 +29,7 @@ namespace VcGrpcService.AppServices
             _userRepository = userRepository;
         }
 
-        public void AddOnlineUser(string userId, IServerStreamWriter<JoinReply> responseStream)
+        public void AddOnlineUser(string userId, IServerStreamWriter<Proto.JoinResponse> responseStream)
         {
             _logger.LogDebug("Adding user to online users. userId : {0}", userId);
             //remove first if already existing to refresh
@@ -39,10 +40,10 @@ namespace VcGrpcService.AppServices
         public void RemoveOnlineUser(string userId)
         {
             _logger.LogDebug("Removing user from online users. userId : {0}", userId);
-            onlineUsers.TryRemove(userId, out IServerStreamWriter<JoinReply> stream);
+            onlineUsers.TryRemove(userId, out IServerStreamWriter<Proto.JoinResponse> stream);
         }
 
-        public async Task BroadcastMessage(string senderId, MessageRequest messageRequest)
+        public async Task BroadcastMessage(string senderId, Proto.Message message)
         {
             _logger.LogDebug("Broadcasting message from {0}", senderId);
             //get and validate sender early
@@ -55,24 +56,24 @@ namespace VcGrpcService.AppServices
 
             Room room;
             //check if private message
-            if (messageRequest.Type == RoomTypeReply.Private && string.IsNullOrEmpty(messageRequest.RoomId))
+            if (message.Type == Proto.RoomType.Private && string.IsNullOrEmpty(message.RoomId))
             {
                 //get and validate receiver 
-                User receiver = await _userRepository.GetUserAsync(messageRequest?.Target);
+                User receiver = await _userRepository.GetUserAsync(message?.Target);
                 if (receiver.IsNull())
                 {
-                    _logger.LogError("Receiver with id : {0} not found. throwing exeption.", messageRequest?.Target);
+                    _logger.LogError("Receiver with id : {0} not found. throwing exeption.", message?.Target);
                     throw new UserNotFoundExeption("Receiver not found");
                 }
 
                 //get private room
-                room = await _roomRepository.GetPrivateRoomAsync(senderId, messageRequest?.Target);
+                room = await _roomRepository.GetPrivateRoomAsync(senderId, message?.Target);
 
                 if (room == null)
                 {
-                    _logger.LogInformation("Creating private room for {0} and {1}", senderId, messageRequest?.Target);
+                    _logger.LogInformation("Creating private room for {0} and {1}", senderId, message?.Target);
 
-                    room = createRoom(senderId, messageRequest?.Target, RoomType.Private);
+                    room = createRoom(senderId, message?.Target, RoomType.Private);
                     room.RoomUsers.Add(new RoomUser() { UserId = sender?.Id, Nickname = sender?.Username });
                     room.RoomUsers.Add(new RoomUser() { UserId = receiver?.Id, Nickname = receiver?.Username });
 
@@ -82,24 +83,24 @@ namespace VcGrpcService.AppServices
             }
             else
             {
-                room = await _roomRepository.GetRoomAsync(messageRequest.RoomId);
+                room = await _roomRepository.GetRoomAsync(message.RoomId);
             }
 
             if (room.IsNull())
             {
-                _logger.LogError("Room with id : {0} not found.", messageRequest?.Target);
+                _logger.LogError("Room with id : {0} not found.", message?.Target);
             }
             else
             {
-                await _messageRepository.AddMessageAsync(createMessage(messageRequest, room, sender));
+                await _messageRepository.AddMessageAsync(createMessage(message, room, sender));
 
                 foreach (var user in room.RoomUsers)
                 {
-                    if (onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<JoinReply> stream))
+                    if (onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
                     {
                         try
                         {
-                            await stream.WriteAsync(createNotification(senderId, messageRequest));
+                            await stream.WriteAsync(createNotification(senderId, message));
                         }
                         catch (Exception ex)
                         {
@@ -112,35 +113,33 @@ namespace VcGrpcService.AppServices
             }
         }
 
-        public async Task<RoomListReply> SendUserRoomsAsync(string userId)
+        public async Task<Proto.GetRoomsResponse> SendUserRoomsAsync(string userId)
         {
             var rooms = await _roomRepository.GetUserRoomsAsync(userId);
-            var roomList = new RoomListReply();
-                foreach (var room in rooms)
-                {
-                    roomList.Rooms.Add(createRoomReply(room));
-                }
-            
-            
+            var roomList = new Proto.GetRoomsResponse();
+            foreach (var room in rooms)
+            {
+                roomList.Rooms.Add(createRoomReply(room));
+            }
             return roomList;
         }
 
-        private RoomReply createRoomReply(Room room)
+        private Proto.Room createRoomReply(Room room)
         {
             long unixTimestamp = room.LastMessageDatetime.IsValid() ? ((DateTimeOffset)room.LastMessageDatetime).ToUnixTimeSeconds() : 0;
-            return new RoomReply() { Id = room.Id, Name = room.Name, Type = covertRoomType(room.Type),  LastMessage = room.LastMessage ?? string.Empty, LastMessageDatetime = unixTimestamp };
+            return new Proto.Room() { Id = room.Id, Name = room.Name, Type = covertRoomType(room.Type),  LastMessage = room.LastMessage ?? string.Empty, LastMessageDatetime = unixTimestamp };
         }
 
-        private RoomTypeReply covertRoomType(RoomType roomType)
+        private Proto.RoomType covertRoomType(RoomType roomType)
         {
             switch (roomType)
             {
                 case RoomType.Private:
-                    return RoomTypeReply.Private;
+                    return Proto.RoomType.Private;
                 case RoomType.Group:
-                    return RoomTypeReply.Group;
+                    return Proto.RoomType.Group;
                 default:
-                    return RoomTypeReply.Unknown;
+                    return Proto.RoomType.Unknown;
             }
         }
 
@@ -150,13 +149,13 @@ namespace VcGrpcService.AppServices
             return new Room() { Name = name, Type = roomType };
         }
 
-        private JoinReply createNotification(string senderId, MessageRequest messageRequest)
+        private Proto.JoinResponse createNotification(string senderId, Proto.Message messageRequest)
         {
-            Notification notification = new Notification() { RoomId = messageRequest.Target, Sender = senderId, MessageBody = messageRequest.MessageBody };
-            return new JoinReply() { Notification = notification };
+            Proto.Notification notification = new Proto.Notification() { RoomId = messageRequest.Target, Sender = senderId, MessageBody = messageRequest.MessageBody };
+            return new Proto.JoinResponse() { Notification = notification };
         }
 
-        private Message createMessage(MessageRequest messageRequest, Room room, User sender)
+        private Message createMessage(Proto.Message messageRequest, Room room, User sender)
         {
             return new Message() { DateSent = DateTime.Now, MessageBody = messageRequest.MessageBody, Room = room, Sender = sender };
         }

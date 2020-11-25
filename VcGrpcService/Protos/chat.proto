@@ -1,23 +1,24 @@
 syntax = "proto3";
 
-option csharp_namespace = "VcGrpcService";
+option csharp_namespace = "VcGrpcService.Proto";
 
 package chat;
 
 // The greeting service definition.
 service Chat {
   // Sends a greeting
-  rpc Join(stream JoinRequest) returns (stream JoinReply);
-  rpc GetRooms(RoomRequest) returns (RoomListReply);
+  rpc Join(stream JoinRequest) returns (stream JoinResponse);
+  rpc GetRooms(GetRoomsRequest) returns (GetRoomsResponse);
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
 }
 
 message JoinRequest{
   bool initial = 1;
-  MessageRequest message_request = 2;
+  Message message = 2;
 }
 
 
-message JoinReply{
+message JoinResponse{
   bool confirmation = 1;
   Notification notification = 2;
 }
@@ -28,31 +29,46 @@ message Notification {
   string message_body = 3;
 }
 
-message MessageRequest {
+message Message {
   string target = 1;
   string room_id = 2;
-  RoomTypeReply type = 3;
+  RoomType type = 3;
   string message_body = 4;
 }
 
-message RoomRequest{
+message GetRoomsRequest{
 }
 
-message RoomListReply{
-  repeated RoomReply rooms = 1;
+message GetRoomsResponse{
+  repeated Room rooms = 1;
 }
 
-message RoomReply{
+message Room{
   string id = 1;
   string name = 2;
-  RoomTypeReply type = 3;
+  RoomType type = 3;
   string last_message = 4;
   int64 last_message_datetime = 5;
 }
 
-enum RoomTypeReply {
+enum RoomType {
   Unknown = 0;
   Private = 1;
   Group = 2;
 }
 
+message GetMessagesRequest{
+  string id = 1;
+  string name = 2;
+  RoomType type = 3;
+  string last_message = 4;
+  int64 last_message_datetime = 5;
+}
+
+message GetMessagesResponse{
+  string id = 1;
+  string name = 2;
+  RoomType type = 3;
+  string last_message = 4;
+  int64 last_message_datetime = 5;
+}

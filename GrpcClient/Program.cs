@@ -12,7 +12,7 @@ namespace GrpcClient
         static async Task Main(string[] args)
         {
             // The port number(5001) must match the port of the gRPC server.
-            using var channel = GrpcChannel.ForAddress("http://localhost:5000");
+            using var channel = GrpcChannel.ForAddress("http://localhost:80");
             var client = new Chat.ChatClient(channel);
 
             var headers = new Metadata();
