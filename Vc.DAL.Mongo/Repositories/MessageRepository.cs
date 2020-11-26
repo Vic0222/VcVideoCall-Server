@@ -26,7 +26,16 @@ namespace Vc.DAL.Mongo.Repositories
 
         public async Task<List<Message>> GetMessagesByRoomIdOfUserAsync(string roomId)
         {
-            var dalMessages = await _collection.FindAsync<Dal.Message>(m => m.RoomId == roomId);
+            var filter = Builders<Dal.Message>.Filter.Eq(m => m.RoomId, roomId);
+
+            var sort = Builders<Dal.Message>.Sort.Descending(nameof(Dal.Message.DateSent));
+
+            var options = new FindOptions<Dal.Message, Dal.Message>()
+            {
+                Sort = sort
+            };
+
+            var dalMessages = await _collection.FindAsync<Dal.Message>(filter, options);
             return _mapper.Map<List<Message>>(dalMessages.ToList());
         }
     }

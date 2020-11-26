@@ -26,31 +26,31 @@ namespace VcGrpcService.Services
 
         }
 
-        public override async Task Join(IAsyncStreamReader<JoinRequest> requestStream, IServerStreamWriter<Proto.JoinResponse> responseStream, ServerCallContext context)
+        public override async Task Join(JoinRequest request, IServerStreamWriter<JoinResponse> responseStream, ServerCallContext context)
         {
-            if (!await requestStream.MoveNext()) return;
             string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
-            do
+            try
             {
-                _chatAppService.AddOnlineUser(senderId, responseStream);
-                if (requestStream.Current.Initial)
-                {
-                    await responseStream.WriteAsync(new Proto.JoinResponse() { Confirmation = true });
-                }
-                else
-                {
-                    await _chatAppService.BroadcastMessage(senderId, requestStream.Current?.MessageRequest).ContinueWith(t => {
-                        if (t.IsFaulted)
-                        {
-                            _logger.LogError(t.Exception, "Broadcast error");
-                        }
-                    });
-                }
                 
-            } while (await requestStream.MoveNext());
+                _chatAppService.AddOnlineUser(senderId, responseStream);
+                await responseStream.WriteAsync(new Proto.JoinResponse() { Confirmation = true });
 
-            _chatAppService.RemoveOnlineUser(senderId);
+                while (!context.CancellationToken.IsCancellationRequested)
+                {
+                    await Task.Delay(5000);
+                }
+
+                _chatAppService.RemoveOnlineUser(senderId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Join room error. UserId : {0}", senderId);
+                throw;
+            }
+            
         }
+
+
         public override async Task<GetRoomsResponse> GetRooms(GetRoomsRequest request, ServerCallContext context)
         {
             try
@@ -83,6 +83,29 @@ namespace VcGrpcService.Services
                 _logger.LogError(ex, "Get Messages error");
                 throw;
             }
+        }
+
+        public override async Task<MessageResponse> SendMessageRequest(MessageRequest request, ServerCallContext context)
+        {
+            string senderId = string.Empty;
+            try
+            {
+                senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
+                await _chatAppService.BroadcastMessage(senderId, request).ContinueWith(t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        _logger.LogError(t.Exception, "Broadcast error");
+                    }
+                });
+                return new MessageResponse();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Send messages error RoomdId : {0}, Sender : {1}", request.RoomId, senderId);
+                throw;
+            }
+
         }
     }
 }

@@ -54,41 +54,11 @@ namespace VcGrpcService.AppServices
                 throw new UserNotFoundExeption("Sender not found");
             }
 
-            Room room;
-            //check if private message
-            if (message.Type == Proto.RoomType.Private && string.IsNullOrEmpty(message.RoomId))
-            {
-                //get and validate receiver 
-                User receiver = await _userRepository.GetUserAsync(message?.Target);
-                if (receiver.IsNull())
-                {
-                    _logger.LogError("Receiver with id : {0} not found. throwing exeption.", message?.Target);
-                    throw new UserNotFoundExeption("Receiver not found");
-                }
-
-                //get private room
-                room = await _roomRepository.GetPrivateRoomAsync(senderId, message?.Target);
-
-                if (room == null)
-                {
-                    _logger.LogInformation("Creating private room for {0} and {1}", senderId, message?.Target);
-
-                    room = createRoom(senderId, message?.Target, RoomType.Private);
-                    room.RoomUsers.Add(new RoomUser() { UserId = sender?.Id, Nickname = sender?.Username });
-                    room.RoomUsers.Add(new RoomUser() { UserId = receiver?.Id, Nickname = receiver?.Username });
-
-                    room.Id = await _roomRepository.AddRoomAsync(room);
-                }
-
-            }
-            else
-            {
-                room = await _roomRepository.GetRoomAsync(message.RoomId);
-            }
+            Room room = await _roomRepository.GetRoomAsync(message.RoomId);
 
             if (room.IsNull())
             {
-                _logger.LogError("Room with id : {0} not found.", message?.Target);
+                _logger.LogError("Room with id : {0} not found.", message?.RoomId);
             }
             else
             {
@@ -170,13 +140,13 @@ namespace VcGrpcService.AppServices
 
         private Proto.JoinResponse createNotification(string senderId, Proto.MessageRequest messageRequest)
         {
-            Proto.MessageNotification notification = new Proto.MessageNotification() { RoomId = messageRequest.Target, Sender = senderId, MessageBody = messageRequest.MessageBody };
+            Proto.MessageNotification notification = new Proto.MessageNotification() { RoomId = messageRequest.RoomId, Sender = senderId, MessageBody = messageRequest.MessageBody };
             return new Proto.JoinResponse() { MessageNotification = notification };
         }
 
         private Message createMessage(Proto.MessageRequest messageRequest, Room room, User sender)
         {
-            return new Message() { DateSent = DateTime.Now, MessageBody = messageRequest.MessageBody, Room = room, Sender = sender };
+            return new Message() { DateSent = DateTime.Now, MessageBody = messageRequest.MessageBody, RoomId = room.Id, SenderId = sender.Id, Room = room, Sender = sender };
         }
 
 

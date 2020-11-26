@@ -7,14 +7,13 @@ package chat;
 // The greeting service definition.
 service Chat {
   // Sends a greeting
-  rpc Join(stream JoinRequest) returns (stream JoinResponse);
+  rpc Join(JoinRequest) returns (stream JoinResponse);
   rpc GetRooms(GetRoomsRequest) returns (GetRoomsResponse);
   rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
+  rpc SendMessageRequest(MessageRequest) returns (MessageResponse);
 }
 
 message JoinRequest{
-  bool initial = 1;
-  MessageRequest message_request = 2;
 }
 
 
@@ -30,10 +29,11 @@ message MessageNotification {
 }
 
 message MessageRequest {
-  string target = 1;
   string room_id = 2;
-  RoomType type = 3;
   string message_body = 4;
+}
+
+message MessageResponse {
 }
 
 message GetRoomsRequest{
