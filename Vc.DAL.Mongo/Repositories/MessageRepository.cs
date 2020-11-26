@@ -24,19 +24,30 @@ namespace Vc.DAL.Mongo.Repositories
             await _collection.InsertOneAsync(dalMessage);
         }
 
-        public async Task<List<Message>> GetMessagesByRoomIdOfUserAsync(string roomId)
+        public async Task<List<Message>> GetMessagesByRoomIdOfUserAsync(string roomId, DateTime? lastMessageDatetime)
         {
-            var filter = Builders<Dal.Message>.Filter.Eq(m => m.RoomId, roomId);
 
-            var sort = Builders<Dal.Message>.Sort.Descending(nameof(Dal.Message.DateSent));
-
-            var options = new FindOptions<Dal.Message, Dal.Message>()
+            var builder = Builders<Dal.Message>.Filter;
+            var filter = builder.Eq(m => m.RoomId, roomId);
+            if (lastMessageDatetime != null)
             {
-                Sort = sort
-            };
+                filter = filter & builder.Gt(m => m.DateSent, lastMessageDatetime);
+            }
 
-            var dalMessages = await _collection.FindAsync<Dal.Message>(filter, options);
-            return _mapper.Map<List<Message>>(dalMessages.ToList());
+            var dalMessages = _collection.Find(filter).SortByDescending(m => m.DateSent);
+
+            List<Dal.Message> domMessages = null;
+
+            if (lastMessageDatetime == null)
+            {
+                domMessages = await dalMessages.Limit(25).ToListAsync();
+            }
+            else
+            {
+                domMessages = await dalMessages.ToListAsync();
+            }
+
+            return _mapper.Map<List<Message>>(domMessages);
         }
     }
 }

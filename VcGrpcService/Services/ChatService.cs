@@ -75,7 +75,9 @@ namespace VcGrpcService.Services
                 {
                     throw new RpcException(new Status(StatusCode.PermissionDenied, "Room access denied"));
                 }
-                return await _chatAppService.GetMessagesByRoomIdOfUser(request.RoomId);
+                
+
+                return await _chatAppService.GetMessagesByRoomIdOfUser(request.RoomId, request.LastMessageDatetime);
 
             }
             catch (Exception ex)

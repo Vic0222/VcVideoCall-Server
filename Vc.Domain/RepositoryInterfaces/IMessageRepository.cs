@@ -9,6 +9,6 @@ namespace Vc.Domain.RepositoryInterfaces
     public interface IMessageRepository : IRepository
     {
         Task AddMessageAsync(Message message);
-        Task<List<Message>> GetMessagesByRoomIdOfUserAsync(string roomId);
+        Task<List<Message>> GetMessagesByRoomIdOfUserAsync(string roomId, DateTime? lastMessageDatetime);
     }
 }

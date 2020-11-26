@@ -83,14 +83,20 @@ namespace VcGrpcService.AppServices
             }
         }
 
-        public async Task<Proto.GetMessagesResponse> GetMessagesByRoomIdOfUser(string roomId)
+        public async Task<Proto.GetMessagesResponse> GetMessagesByRoomIdOfUser(string roomId, long lastMessageTimestamp)
         {
-            List<Message> messages = await _messageRepository.GetMessagesByRoomIdOfUserAsync(roomId);
+            DateTime? lastMessageDatetime = null;
+            if (lastMessageTimestamp > 0)
+            {
+                lastMessageDatetime = DateTimeOffset.FromUnixTimeSeconds(lastMessageTimestamp).DateTime;
+            }
+
+            List<Message> messages = await _messageRepository.GetMessagesByRoomIdOfUserAsync(roomId, lastMessageDatetime);
 
             var response = new Proto.GetMessagesResponse();
             foreach (var message in messages)
             {
-                response.Messages.Add(new Proto.Message() { RoomId = message.RoomId, SenderId = message.SenderId, MessageBody = message.MessageBody });
+                response.Messages.Add(new Proto.Message() {Id = message.Id,  RoomId = message.RoomId, SenderId = message.SenderId, MessageBody = message.MessageBody });
             }
             return response;
 

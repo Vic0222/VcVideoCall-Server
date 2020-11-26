@@ -59,6 +59,7 @@ enum RoomType {
 
 message GetMessagesRequest{
   string room_id = 1;
+  int64 last_message_datetime = 2;
 }
 
 message GetMessagesResponse{
@@ -66,7 +67,8 @@ message GetMessagesResponse{
 }
 
 message Message {
-  string room_id = 1;
-  string message_body = 2;
-  string sender_id = 3;
+  string id = 1;
+  string room_id = 2;
+  string message_body = 3;
+  string sender_id = 4;
 }
