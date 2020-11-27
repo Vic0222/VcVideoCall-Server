@@ -66,14 +66,14 @@ message CallOfferRequest
 
 message CallOfferResponse
 {
-  CallRequestStatus status = 1;
+  CallOfferStatus status = 1;
   RtcSessionDescription rtc_session_description = 2;
   string receiver_id = 3;
 }
 
 message CallAnswerRequest
 {
-  CallRequestStatus status = 1;
+  CallOfferStatus status = 1;
   RtcSessionDescription rtc_session_description = 2;
   string room_id = 3;
 }
@@ -88,7 +88,7 @@ message CallOfferNotification{
   RtcSessionDescription rtc_session_description = 3;
 }
 
-enum CallRequestStatus{
+enum CallOfferStatus{
 	Rejected = 0;
 	Accepted = 1;
 }

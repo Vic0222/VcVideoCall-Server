@@ -112,7 +112,7 @@ namespace VcGrpcService.AppServices
 
         }
 
-        public async Task<Proto.CallAnswerResponse> ReceiveCallAnserAsync(Proto.CallRequestStatus status, string receiverId, string roomId, Proto.RtcSessionDescription rtcSessionDescription)
+        public async Task<Proto.CallAnswerResponse> ReceiveCallAnserAsync(Proto.CallOfferStatus status, string receiverId, string roomId, Proto.RtcSessionDescription rtcSessionDescription)
         {
             _onGoingCallOffer.TryGetValue(roomId, out CallInfo callInfo);
             callInfo.RtcSessionDescription = rtcSessionDescription;
@@ -120,7 +120,7 @@ namespace VcGrpcService.AppServices
 
             switch (status)
             {
-                case Proto.CallRequestStatus.Accepted:
+                case Proto.CallOfferStatus.Accepted:
                     callInfo.Status = CallStatus.Accepted;
                     break;
                 default:
@@ -168,14 +168,14 @@ namespace VcGrpcService.AppServices
             {
                 await Task.Delay(1000);
             }
-            var status = Proto.CallRequestStatus.Rejected;
+            var status = Proto.CallOfferStatus.Rejected;
             switch (callInfo.Status)
             {
                 case CallStatus.Accepted:
-                    status = Proto.CallRequestStatus.Accepted;
+                    status = Proto.CallOfferStatus.Accepted;
                     break;
                 default:
-                    status = Proto.CallRequestStatus.Rejected;
+                    status = Proto.CallOfferStatus.Rejected;
                     break;
             }
             return new Proto.CallOfferResponse() { Status = status, RtcSessionDescription = callInfo.RtcSessionDescription, ReceiverId = callInfo.ReceiverId };
