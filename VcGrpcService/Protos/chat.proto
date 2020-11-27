@@ -11,6 +11,9 @@ service Chat {
   rpc GetRooms(GetRoomsRequest) returns (GetRoomsResponse);
   rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
   rpc SendMessageRequest(MessageRequest) returns (MessageResponse);
+  rpc SendCallOffer(CallOfferRequest) returns (CallOfferResponse);
+  rpc ReceiveCallAnswer(CallAnswerRequest) returns (CallAnswerResponse);
+  rpc SendIceCandidate(IceCandidateRequest) returns (IceCandidateResponse);
 }
 
 message JoinRequest{
@@ -18,8 +21,88 @@ message JoinRequest{
 
 
 message JoinResponse{
-  bool confirmation = 1;
+  JoinResponseType type = 1;
   MessageNotification message_notification = 2;
+  CallOfferNotification call_offer_notification = 3;
+  IceCandidateNotification ice_candidate_notification = 4;
+}
+
+enum JoinResponseType {
+  Confirmation = 0;
+  Notification = 1;
+  CallSignaling = 2;
+  IceCandidate = 3;
+}
+
+message IceCandidateRequest {
+  string send_to_user_id = 1;
+  RtcIceCandidate rtc_ice_candidate = 2;
+}
+
+message IceCandidateResponse{
+}
+
+message RtcSessionDescription {
+  string sdp = 1;
+  string type = 2;
+}
+
+message IceCandidateNotification{
+  RtcIceCandidate rtc_ice_candidate = 1;
+}
+
+message RtcIceCandidate {
+  string candidate = 1;
+  string sdpMid = 2;
+  int32 sdpMlineIndex = 3;
+}
+
+
+message CallOfferRequest
+{
+  RtcSessionDescription rtc_session_description = 1;
+  string room_id = 2;
+}
+
+message CallOfferResponse
+{
+  CallRequestStatus status = 1;
+  RtcSessionDescription rtc_session_description = 2;
+  string receiver_id = 3;
+}
+
+message CallAnswerRequest
+{
+  CallRequestStatus status = 1;
+  RtcSessionDescription rtc_session_description = 2;
+  string room_id = 3;
+}
+
+message CallAnswerResponse
+{
+}
+
+message CallOfferNotification{
+  string sender_id = 1;
+  string room_id = 2;
+  RtcSessionDescription rtc_session_description = 3;
+}
+
+enum CallRequestStatus{
+	Rejected = 0;
+	Accepted = 1;
+}
+
+
+
+message CallSignal{
+  CallSignalType type = 1;
+  RtcSessionDescription rtc_session_description = 2;
+}
+
+enum CallSignalType{
+	Offer = 0;
+	Answer = 1;
 }
 
 message MessageNotification {

@@ -33,7 +33,7 @@ namespace VcGrpcService.Services
             {
                 
                 _chatAppService.AddOnlineUser(senderId, responseStream);
-                await responseStream.WriteAsync(new Proto.JoinResponse() { Confirmation = true });
+                await responseStream.WriteAsync(new Proto.JoinResponse() { Type = JoinResponseType.Confirmation });
 
                 while (!context.CancellationToken.IsCancellationRequested)
                 {
@@ -108,6 +108,34 @@ namespace VcGrpcService.Services
                 throw;
             }
 
+        }
+
+        public override async Task<CallOfferResponse> SendCallOffer(CallOfferRequest request, ServerCallContext context)
+        {
+            string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
+            try
+            {
+               return  await _chatAppService.SendCallOfferAsync(senderId, request.RoomId, request.RtcSessionDescription, context.CancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Send offer video call error Sender : {1}", senderId);
+                throw;
+            }
+        }
+
+        public override async Task<CallAnswerResponse> ReceiveCallAnswer(CallAnswerRequest request, ServerCallContext context)
+        {
+            string receiverId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
+            try
+            {
+                return await _chatAppService.ReceiveCallAnserAsync(request.Status, receiverId, request.RoomId, request.RtcSessionDescription);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Send offer video call error Sender : {1}", receiverId);
+                throw;
+            }
         }
     }
 }
