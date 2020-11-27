@@ -24,8 +24,7 @@ message JoinResponse{
 
 message MessageNotification {
   string room_id = 1;
-  string sender = 2;
-  string message_body = 3;
+  string sender_id = 2;
 }
 
 message MessageRequest {
@@ -64,6 +63,7 @@ message GetMessagesRequest{
 
 message GetMessagesResponse{
   repeated Message messages = 1;
+  int64 last_message_datetime = 2;
 }
 
 message Message {
@@ -71,4 +71,5 @@ message Message {
   string room_id = 2;
   string message_body = 3;
   string sender_id = 4;
+  int64 date_sent = 5;
 }

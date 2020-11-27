@@ -94,10 +94,17 @@ namespace VcGrpcService.AppServices
             List<Message> messages = await _messageRepository.GetMessagesByRoomIdOfUserAsync(roomId, lastMessageDatetime);
 
             var response = new Proto.GetMessagesResponse();
-            foreach (var message in messages)
+            if (messages.Count > 0)
             {
-                response.Messages.Add(new Proto.Message() {Id = message.Id,  RoomId = message.RoomId, SenderId = message.SenderId, MessageBody = message.MessageBody });
+                long lastDateSentTimestamp = ((DateTimeOffset)messages.FirstOrDefault()?.DateSent).ToUnixTimeSeconds();
+                response.LastMessageDatetime = lastDateSentTimestamp;
+                foreach (var message in messages)
+                {
+                    long dateSentTimestamp = ((DateTimeOffset)message.DateSent).ToUnixTimeSeconds();
+                    response.Messages.Add(new Proto.Message() { Id = message.Id, RoomId = message.RoomId, SenderId = message.SenderId, MessageBody = message.MessageBody, DateSent = dateSentTimestamp });
+                }
             }
+            
             return response;
 
         }
@@ -146,7 +153,7 @@ namespace VcGrpcService.AppServices
 
         private Proto.JoinResponse createNotification(string senderId, Proto.MessageRequest messageRequest)
         {
-            Proto.MessageNotification notification = new Proto.MessageNotification() { RoomId = messageRequest.RoomId, Sender = senderId, MessageBody = messageRequest.MessageBody };
+            Proto.MessageNotification notification = new Proto.MessageNotification() { RoomId = messageRequest.RoomId, SenderId = senderId };
             return new Proto.JoinResponse() { MessageNotification = notification };
         }
 
