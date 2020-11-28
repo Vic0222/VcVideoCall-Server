@@ -133,8 +133,10 @@ namespace VcGrpcService.AppServices
 
         public async Task<Proto.CallOfferResponse> SendCallOfferAsync(string senderId, string roomId, Proto.RtcSessionDescription rtcSessionDescription, CancellationToken cancellationToken)
         {
-            CallInfo callInfo = new CallInfo();
+            CallInfo callInfo = new CallInfo() { Status = CallStatus.Ongoing };
             _onGoingCallOffer.TryAdd(roomId ?? "", callInfo);
+
+            int availableRoomUsers = 0;
 
             Room room = await _roomRepository.GetRoomAsync(roomId);
             if (room.IsNull())
@@ -143,7 +145,8 @@ namespace VcGrpcService.AppServices
             }
             else
             {
-                foreach (var user in room.RoomUsers.Where(ru => ru.UserId != senderId))
+                IEnumerable<RoomUser> otherRoomUsers = room.RoomUsers.Where(ru => ru.UserId != senderId);
+                foreach (var user in otherRoomUsers)
                 {
                     if (_onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
                     {
@@ -151,6 +154,7 @@ namespace VcGrpcService.AppServices
                         {
                             
                             await stream.WriteAsync(createJoinResponseForVideoCall(senderId, rtcSessionDescription));
+                            availableRoomUsers++;
 
                         }
                         catch (Exception ex)
@@ -163,11 +167,18 @@ namespace VcGrpcService.AppServices
                 }
                 
             }
-
-            while (callInfo.Status == CallStatus.Ongoing && !cancellationToken.IsCancellationRequested)
+            if (availableRoomUsers > 0)
             {
-                await Task.Delay(1000);
+                //hard 2 min timeout
+                TimeSpan hardTimeout = TimeSpan.FromMinutes(2);
+                DateTime starTime = DateTime.Now;
+
+                while (callInfo.Status == CallStatus.Ongoing && !cancellationToken.IsCancellationRequested && (DateTime.Now - starTime) <= hardTimeout)
+                {
+                    await Task.Delay(1000);
+                }
             }
+
             var status = Proto.CallOfferStatus.Rejected;
             switch (callInfo.Status)
             {

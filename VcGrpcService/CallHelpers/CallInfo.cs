@@ -8,6 +8,11 @@ namespace VcGrpcService.CallHelpers
 {
     public class CallInfo
     {
+        public CallInfo()
+        {
+            Status = CallStatus.Ongoing;
+            ReceiverId = string.Empty;
+        }
         public RtcSessionDescription RtcSessionDescription { get; set; }
         public string ReceiverId { get; set; }
         public CallStatus Status { get; set; }
