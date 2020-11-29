@@ -131,6 +131,45 @@ namespace VcGrpcService.AppServices
             return new Proto.CallAnswerResponse() {  };
         }
 
+        public async Task<Proto.IceCandidateResponse> SendIceCandidate(string senderId, Proto.IceCandidateRequest request)
+        {
+            Room room = await _roomRepository.GetRoomAsync(request.RoomId);
+            if (room.IsNull())
+            {
+                _logger.LogError("Room with id : {0} not found.", request.RoomId);
+            }
+            else
+            {
+                IEnumerable<RoomUser> otherRoomUsers = room.RoomUsers.Where(ru => ru.UserId != senderId);
+                foreach (var user in otherRoomUsers)
+                {
+                    if (_onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
+                    {
+                        try
+                        {
+                            await stream.WriteAsync(createIceCandidateNotification(request));
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "SendIceCandidate stream write error. Removing user from online users");
+                            _onlineUsers.TryRemove(user.UserId, out _);
+                        }
+
+                    }
+                }
+
+            }
+            return new Proto.IceCandidateResponse();
+
+        }
+
+        private static Proto.JoinResponse createIceCandidateNotification(Proto.IceCandidateRequest request)
+        {
+            var iceCandidate = new Proto.IceCandidateNotification() { RoomId = request.RoomId, RtcIceCandidate = request.RtcIceCandidate };
+            Proto.JoinResponse joinResponse = new Proto.JoinResponse() { Type = Proto.JoinResponseType.IceCandidate, IceCandidateNotification = iceCandidate };
+            return joinResponse;
+        }
+
         public async Task<Proto.CallOfferResponse> SendCallOfferAsync(string senderId, string roomId, Proto.RtcSessionDescription rtcSessionDescription, CancellationToken cancellationToken)
         {
             CallInfo callInfo = new CallInfo() { Status = CallStatus.Ongoing };
@@ -153,7 +192,7 @@ namespace VcGrpcService.AppServices
                         try
                         {
                             
-                            await stream.WriteAsync(createJoinResponseForVideoCall(senderId, rtcSessionDescription));
+                            await stream.WriteAsync(createJoinResponseForVideoCall(senderId, roomId, rtcSessionDescription));
                             availableRoomUsers++;
 
                         }
@@ -173,10 +212,17 @@ namespace VcGrpcService.AppServices
                 TimeSpan hardTimeout = TimeSpan.FromMinutes(2);
                 DateTime starTime = DateTime.Now;
 
-                while (callInfo.Status == CallStatus.Ongoing && !cancellationToken.IsCancellationRequested && (DateTime.Now - starTime) <= hardTimeout)
+
+
+                CallInfo callInfo1 = callInfo;
+
+                while (callInfo1.IsNotNull() && callInfo1.Status == CallStatus.Ongoing && !cancellationToken.IsCancellationRequested && (DateTime.Now - starTime) <= hardTimeout)
                 {
                     await Task.Delay(1000);
+                    _onGoingCallOffer.TryGetValue(roomId, out callInfo1);
                 }
+
+                callInfo = callInfo1;
             }
 
             var status = Proto.CallOfferStatus.Rejected;
@@ -189,13 +235,16 @@ namespace VcGrpcService.AppServices
                     status = Proto.CallOfferStatus.Rejected;
                     break;
             }
+
+            _onGoingCallOffer.TryRemove(roomId, out _);
+
             return new Proto.CallOfferResponse() { Status = status, RtcSessionDescription = callInfo.RtcSessionDescription, ReceiverId = callInfo.ReceiverId };
 
         }
 
-        private static Proto.JoinResponse createJoinResponseForVideoCall(string senderId, Proto.RtcSessionDescription rtcSessionDescription)
+        private static Proto.JoinResponse createJoinResponseForVideoCall(string senderId, string roomId, Proto.RtcSessionDescription rtcSessionDescription)
         {
-            return new Proto.JoinResponse() { Type = Proto.JoinResponseType.CallSignaling, CallOfferNotification = new Proto.CallOfferNotification() { SenderId = senderId, RtcSessionDescription = rtcSessionDescription } };
+            return new Proto.JoinResponse() { Type = Proto.JoinResponseType.CallSignaling, CallOfferNotification = new Proto.CallOfferNotification() { SenderId = senderId, RtcSessionDescription = rtcSessionDescription, RoomId = roomId } };
         }
 
         public async Task<bool> IsUserInRoomAsync(string userId, string roomId)

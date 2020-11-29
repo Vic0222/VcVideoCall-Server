@@ -137,5 +137,19 @@ namespace VcGrpcService.Services
                 throw;
             }
         }
+
+        public override async Task<IceCandidateResponse> SendIceCandidate(IceCandidateRequest request, ServerCallContext context)
+        {
+            string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
+            try
+            {
+                return await _chatAppService.SendIceCandidate(senderId, request);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Send offer video call error Sender : {1}", senderId);
+                throw;
+            }
+        }
     }
 }
