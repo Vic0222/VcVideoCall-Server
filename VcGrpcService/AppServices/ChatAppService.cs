@@ -88,6 +88,8 @@ namespace VcGrpcService.AppServices
 
         public async Task<Proto.GetMessagesResponse> GetMessagesByRoomIdOfUser(string roomId, long lastMessageTimestamp)
         {
+
+            _logger.LogDebug("Getting messages for room {0} with lastmessage timestamp of {1} starting", roomId, lastMessageTimestamp);
             DateTime? lastMessageDatetime = null;
             if (lastMessageTimestamp > 0)
             {
@@ -107,7 +109,8 @@ namespace VcGrpcService.AppServices
                     response.Messages.Add(new Proto.Message() { Id = message.Id, RoomId = message.RoomId, SenderId = message.SenderId, MessageBody = message.MessageBody, DateSent = dateSentTimestamp });
                 }
             }
-            
+            _logger.LogDebug("Getting messages for room {0} with lastmessage timestamp of {1} done", roomId, lastMessageTimestamp);
+
             return response;
 
         }

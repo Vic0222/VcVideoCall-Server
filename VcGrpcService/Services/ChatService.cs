@@ -69,6 +69,7 @@ namespace VcGrpcService.Services
         {
             try
             {
+                
                 string userId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
                 bool isInRoom = await _chatAppService.IsUserInRoomAsync(userId, request.RoomId);
                 if (!isInRoom)
