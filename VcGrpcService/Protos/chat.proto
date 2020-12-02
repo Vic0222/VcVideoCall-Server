@@ -12,8 +12,16 @@ service Chat {
   rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
   rpc SendMessageRequest(MessageRequest) returns (MessageResponse);
   rpc SendCallOffer(CallOfferRequest) returns (CallOfferResponse);
-  rpc ReceiveCallAnswer(CallAnswerRequest) returns (CallAnswerResponse);
+  rpc SendCallAnswer(CallAnswerRequest) returns (CallAnswerResponse);
   rpc SendIceCandidate(IceCandidateRequest) returns (IceCandidateResponse);
+  rpc SendPeerConnectionClose(PeerConnectionCloseRequest) returns (PeerConnectionCloseResponse);
+}
+
+message PeerConnectionCloseRequest {
+  string room_id = 1;
+}
+
+message PeerConnectionCloseResponse {
 }
 
 message JoinRequest{
@@ -25,6 +33,7 @@ message JoinResponse{
   MessageNotification message_notification = 2;
   CallOfferNotification call_offer_notification = 3;
   IceCandidateNotification ice_candidate_notification = 4;
+  PeerConnectionCloseNotification peer_connection_close_notification = 5;
 }
 
 enum JoinResponseType {
@@ -32,6 +41,7 @@ enum JoinResponseType {
   Notification = 1;
   CallSignaling = 2;
   IceCandidate = 3;
+  PeerConnectionClose = 4;
 }
 
 message IceCandidateRequest {
@@ -50,6 +60,10 @@ message RtcSessionDescription {
 message IceCandidateNotification{
   string room_id = 1;
   RtcIceCandidate rtc_ice_candidate = 2;
+}
+
+message PeerConnectionCloseNotification{
+  string room_id = 1;
 }
 
 message RtcIceCandidate {

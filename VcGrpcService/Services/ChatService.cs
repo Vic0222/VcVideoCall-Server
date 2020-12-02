@@ -125,12 +125,12 @@ namespace VcGrpcService.Services
             }
         }
 
-        public override async Task<CallAnswerResponse> ReceiveCallAnswer(CallAnswerRequest request, ServerCallContext context)
+        public override async Task<CallAnswerResponse> SendCallAnswer(CallAnswerRequest request, ServerCallContext context)
         {
             string receiverId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
             try
             {
-                var response = await _chatAppService.ReceiveCallAnserAsync(request.Status, receiverId, request.RoomId, request.RtcSessionDescription);
+                var response = await _chatAppService.SendCallAnserAsync(request.Status, receiverId, request.RoomId, request.RtcSessionDescription);
                 if (response == null)
                 {
                     throw new RpcException(new Status(StatusCode.Cancelled, "Call was cancelled"));
@@ -150,6 +150,20 @@ namespace VcGrpcService.Services
             try
             {
                 return await _chatAppService.SendIceCandidate(senderId, request);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Send offer video call error Sender : {1}", senderId);
+                throw;
+            }
+        }
+
+        public override async Task<PeerConnectionCloseResponse> SendPeerConnectionClose(PeerConnectionCloseRequest request, ServerCallContext context)
+        {
+            string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
+            try
+            {
+                return await _chatAppService.SendPeerConnectionClose(senderId, request);
             }
             catch (Exception ex)
             {
