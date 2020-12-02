@@ -130,7 +130,12 @@ namespace VcGrpcService.Services
             string receiverId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
             try
             {
-                return await _chatAppService.ReceiveCallAnserAsync(request.Status, receiverId, request.RoomId, request.RtcSessionDescription);
+                var response = await _chatAppService.ReceiveCallAnserAsync(request.Status, receiverId, request.RoomId, request.RtcSessionDescription);
+                if (response == null)
+                {
+                    throw new RpcException(new Status(StatusCode.Cancelled, "Call was cancelled"));
+                }
+                return response;
             }
             catch (Exception ex)
             {

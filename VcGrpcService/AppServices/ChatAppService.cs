@@ -117,21 +117,28 @@ namespace VcGrpcService.AppServices
 
         public async Task<Proto.CallAnswerResponse> ReceiveCallAnserAsync(Proto.CallOfferStatus status, string receiverId, string roomId, Proto.RtcSessionDescription rtcSessionDescription)
         {
-            _onGoingCallOffer.TryGetValue(roomId, out CallInfo callInfo);
-            callInfo.RtcSessionDescription = rtcSessionDescription;
-            callInfo.ReceiverId = receiverId;
+            Proto.CallAnswerResponse response = null;
 
-            switch (status)
+            if (_onGoingCallOffer.TryGetValue(roomId, out CallInfo callInfo))
             {
-                case Proto.CallOfferStatus.Accepted:
-                    callInfo.Status = CallStatus.Accepted;
-                    break;
-                default:
-                    callInfo.Status = CallStatus.Rejected;
-                    break;
+                callInfo.RtcSessionDescription = rtcSessionDescription;
+                callInfo.ReceiverId = receiverId;
+                switch (status)
+                {
+                    case Proto.CallOfferStatus.Accepted:
+                        callInfo.Status = CallStatus.Accepted;
+                        break;
+                    default:
+                        callInfo.Status = CallStatus.Rejected;
+                        break;
+                }
+
+                response = new Proto.CallAnswerResponse();
             }
 
-            return new Proto.CallAnswerResponse() {  };
+
+            return response;
+
         }
 
         public async Task<Proto.IceCandidateResponse> SendIceCandidate(string senderId, Proto.IceCandidateRequest request)
@@ -229,19 +236,24 @@ namespace VcGrpcService.AppServices
             }
 
             var status = Proto.CallOfferStatus.Rejected;
-            switch (callInfo.Status)
+            if (callInfo != null)
             {
-                case CallStatus.Accepted:
-                    status = Proto.CallOfferStatus.Accepted;
-                    break;
-                default:
-                    status = Proto.CallOfferStatus.Rejected;
-                    break;
+                switch (callInfo.Status)
+                {
+                    case CallStatus.Accepted:
+                        status = Proto.CallOfferStatus.Accepted;
+                        break;
+                    default:
+                        status = Proto.CallOfferStatus.Rejected;
+                        break;
+                }
             }
+
+            
 
             _onGoingCallOffer.TryRemove(roomId, out _);
 
-            return new Proto.CallOfferResponse() { Status = status, RtcSessionDescription = callInfo.RtcSessionDescription, ReceiverId = callInfo.ReceiverId };
+            return new Proto.CallOfferResponse() { Status = status, RtcSessionDescription = callInfo?.RtcSessionDescription, ReceiverId = callInfo?.ReceiverId };
 
         }
 
