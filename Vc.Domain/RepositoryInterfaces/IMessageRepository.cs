@@ -10,5 +10,6 @@ namespace Vc.Domain.RepositoryInterfaces
     {
         Task AddMessageAsync(Message message);
         Task<List<Message>> GetMessagesByRoomIdOfUserAsync(string roomId, DateTime? lastMessageDatetime);
+        Task<Message> GetRoomLastMessageAsync(string roomId);
     }
 }

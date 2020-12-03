@@ -49,5 +49,16 @@ namespace Vc.DAL.Mongo.Repositories
 
             return _mapper.Map<List<Message>>(domMessages);
         }
+
+        public async Task<Message> GetRoomLastMessageAsync(string roomId)
+        {
+            var builder = Builders<Dal.Message>.Filter;
+            var filter = builder.Eq(m => m.RoomId, roomId);
+
+            var dalMessages = _collection.Find(filter).SortByDescending(m => m.DateSent);
+            var dalMessage = await dalMessages.FirstOrDefaultAsync();
+
+            return dalMessage != null ? _mapper.Map<Message>(dalMessage) : null;
+        }
     }
 }

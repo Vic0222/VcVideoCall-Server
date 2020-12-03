@@ -311,21 +311,31 @@ namespace VcGrpcService.AppServices
             return await _roomRepository.IsUserInRoomAsync(userId, roomId);
         }
 
-        public async Task<Proto.GetRoomsResponse> SendUserRoomsAsync(string userId)
+        public async Task<Proto.GetRoomsResponse> GetUserRoomsAsync(string userId)
         {
             var rooms = await _roomRepository.GetUserRoomsAsync(userId);
             var roomList = new Proto.GetRoomsResponse();
             foreach (var room in rooms)
             {
-                roomList.Rooms.Add(createRoomReply(room));
+                roomList.Rooms.Add(await createRoomReply(userId, room));
             }
             return roomList;
         }
 
-        private Proto.Room createRoomReply(Room room)
+        private async Task<Proto.Room> createRoomReply(string currentUserId, Room room)
         {
-            long unixTimestamp = room.LastMessageDatetime.IsValid() ? ((DateTimeOffset)room.LastMessageDatetime).ToUnixTimeSeconds() : 0;
-            return new Proto.Room() { Id = room.Id, Name = room.Name, Type = covertRoomType(room.Type),  LastMessage = room.LastMessage ?? string.Empty, LastMessageDatetime = unixTimestamp };
+            
+
+            string name = room.Name;
+            if (room.Type == RoomType.Private)
+            {
+                name = room.RoomUsers.FirstOrDefault(ru => ru.UserId != currentUserId)?.Nickname ?? string.Empty;
+            }
+            Message message = await _messageRepository.GetRoomLastMessageAsync(room.Id);
+            string lastMessage = message?.MessageBody ?? string.Empty;
+            long unixTimestamp = message.DateSent.IsValid() ? ((DateTimeOffset)message.DateSent).ToUnixTimeSeconds() : 0;
+
+            return new Proto.Room() { Id = room.Id, Name = name, Type = covertRoomType(room.Type),  LastMessage = lastMessage, LastMessageDatetime = unixTimestamp };
         }
 
         private Proto.RoomType covertRoomType(RoomType roomType)
