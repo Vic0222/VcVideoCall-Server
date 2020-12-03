@@ -115,7 +115,7 @@ namespace VcGrpcService.AppServices
 
         }
 
-        public async Task<Proto.CallAnswerResponse> ReceiveCallAnserAsync(Proto.CallOfferStatus status, string receiverId, string roomId, Proto.RtcSessionDescription rtcSessionDescription)
+        public async Task<Proto.CallAnswerResponse> SendCallAnserAsync(Proto.CallOfferStatus status, string receiverId, string roomId, Proto.RtcSessionDescription rtcSessionDescription)
         {
             Proto.CallAnswerResponse response = null;
 
@@ -173,6 +173,47 @@ namespace VcGrpcService.AppServices
 
         }
 
+        public async Task<Proto.PeerConnectionCloseResponse> SendPeerConnectionClose(string senderId, Proto.PeerConnectionCloseRequest request)
+        {
+            _logger.LogDebug("Broadcasting peer connection close from {0}", senderId);
+            //get and validate sender early
+            User sender = await _userRepository.GetUserAsync(senderId);
+            if (sender.IsNull())
+            {
+                _logger.LogError("Sender with id : {0} not found. throwing exeption.", senderId);
+                throw new UserNotFoundExeption("Sender not found");
+            }
+
+            Room room = await _roomRepository.GetRoomAsync(request.RoomId);
+
+            if (room.IsNull())
+            {
+                _logger.LogError("Room with id : {0} not found.", request?.RoomId ?? string.Empty);
+            }
+            else
+            {
+
+                foreach (var user in room.RoomUsers.Where(ru => ru.UserId != senderId))
+                {
+                    if (_onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
+                    {
+                        try
+                        {
+                            await stream.WriteAsync(createJoinResponseForPeerConnectionClose(senderId, request));
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Stream write error removing user from online users");
+                            _onlineUsers.TryRemove(user.UserId, out _);
+                        }
+
+                    }
+                }
+            }
+
+            return new Proto.PeerConnectionCloseResponse();
+        }
+
         private static Proto.JoinResponse createIceCandidateNotification(Proto.IceCandidateRequest request)
         {
             var iceCandidate = new Proto.IceCandidateNotification() { RoomId = request.RoomId, RtcIceCandidate = request.RtcIceCandidate };
@@ -183,6 +224,8 @@ namespace VcGrpcService.AppServices
         public async Task<Proto.CallOfferResponse> SendCallOfferAsync(string senderId, string roomId, Proto.RtcSessionDescription rtcSessionDescription, CancellationToken cancellationToken)
         {
             CallInfo callInfo = new CallInfo() { Status = CallStatus.Ongoing };
+            _onGoingCallOffer.TryRemove(roomId ?? "", out _ );
+
             _onGoingCallOffer.TryAdd(roomId ?? "", callInfo);
 
             int availableRoomUsers = 0;
@@ -308,6 +351,12 @@ namespace VcGrpcService.AppServices
         {
             Proto.MessageNotification notification = new Proto.MessageNotification() { RoomId = messageRequest.RoomId, SenderId = senderId };
             return new Proto.JoinResponse() {Type = Proto.JoinResponseType.Notification, MessageNotification = notification };
+        }
+
+        private Proto.JoinResponse createJoinResponseForPeerConnectionClose(string senderId, Proto.PeerConnectionCloseRequest messageRequest)
+        {
+            Proto.PeerConnectionCloseNotification notification = new Proto.PeerConnectionCloseNotification() { RoomId = messageRequest.RoomId, };
+            return new Proto.JoinResponse() { Type = Proto.JoinResponseType.PeerConnectionClose, PeerConnectionCloseNotification = notification };
         }
 
         private Message createMessage(Proto.MessageRequest messageRequest, Room room, User sender)
