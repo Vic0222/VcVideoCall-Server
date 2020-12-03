@@ -56,7 +56,7 @@ namespace VcGrpcService.Services
             try
             {
                 string userId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
-                return await _chatAppService.SendUserRoomsAsync(userId);
+                return await _chatAppService.GetUserRoomsAsync(userId);
             }
             catch (Exception ex)
             {
