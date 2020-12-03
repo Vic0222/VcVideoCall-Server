@@ -321,7 +321,7 @@ namespace VcGrpcService.AppServices
             }
             return roomList;
         }
-
+        //test
         private async Task<Proto.Room> createRoomReply(string currentUserId, Room room)
         {
             
