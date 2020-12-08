@@ -335,6 +335,7 @@ namespace VcGrpcService.AppServices
             string lastMessage = message?.MessageBody ?? string.Empty;
             long unixTimestamp = message.DateSent.IsValid() ? ((DateTimeOffset)message.DateSent).ToUnixTimeSeconds() : 0;
             bool isOnline = room.RoomUsers.Select(ru => ru.UserId).Intersect(_onlineUsers.Where(u => u.Key != currentUserId).Select(u => u.Key)).Any();
+            
 
             return new Proto.Room() { Id = room.Id, Name = name, Type = covertRoomType(room.Type),  LastMessage = lastMessage, LastMessageDatetime = unixTimestamp, IsOnline = isOnline };
         }

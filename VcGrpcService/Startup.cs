@@ -16,6 +16,7 @@ using Vc.DAL.Mongo;
 using Vc.DAL.Mongo.Repositories;
 using Vc.Domain.RepositoryInterfaces;
 using VcGrpcService.AppServices;
+using VcGrpcService.Middlewares;
 using VcGrpcService.Services;
 
 namespace VcGrpcService
@@ -43,6 +44,7 @@ namespace VcGrpcService
             services.AddGrpc();
             services.AddAutoMapper(typeof(AbstractRepository<>));
             services.AddSingleton<ChatAppService>();
+            services.AddSingleton<UserAppService>();
             services.AddTransient<ClientManager>();
             services.Scan(scan =>
                 scan.FromAssembliesOf(typeof(AbstractRepository<>))
@@ -80,6 +82,8 @@ namespace VcGrpcService
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseMiddleware<SyncUserMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {

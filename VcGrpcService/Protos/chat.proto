@@ -147,6 +147,7 @@ message Room{
   string last_message = 4;
   int64 last_message_datetime = 5;
   bool is_online = 6;
+  string photo_url = 7;
 }
 
 enum RoomType {

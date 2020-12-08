@@ -11,5 +11,8 @@ namespace Vc.DAL.Mongo.Collections
         [BsonId(IdGenerator = typeof(StringObjectIdGenerator))]
         public string Id { get; set; }
         public string Username { get; set; }
+        public string PhotoUrl { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
     }
 }
