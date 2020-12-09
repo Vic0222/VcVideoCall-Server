@@ -8,13 +8,14 @@ using Dom = Vc.Domain.Entities;
 using Dal = Vc.DAL.Mongo.Collections;
 using MongoDB.Driver;
 using AutoMapper;
+using Vc.DAL.Mongo.Transactions;
 
 namespace Vc.DAL.Mongo.Repositories
 {
     public class MessageRepository : AbstractRepository<Dal.Message>, IMessageRepository
     {
 
-        public MessageRepository(ClientManager clientManager, IMapper mapper) : base(clientManager, mapper, "messages")
+        public MessageRepository(ClientManager clientManager, IMapper mapper, MongoDatabaseSessionManager mongoDatabaseSessionManager) : base(clientManager, mapper, "messages", mongoDatabaseSessionManager)
         {
         }
 

@@ -8,20 +8,24 @@ namespace Vc.DAL.Mongo
     public class ClientManager
     {
         private readonly MongoDatabaseSetting _mongoDatabaseSetting;
+        private MongoClient _defaultMongoClient;
 
         public ClientManager(IOptions<MongoDatabaseSetting> mongoDatabaseSetting)
         {
             _mongoDatabaseSetting = mongoDatabaseSetting?.Value;
+            RenewMongoClient();
         }
-        public MongoClient GetMongoClient()
+
+        public void RenewMongoClient()
         {
-            return new MongoClient(_mongoDatabaseSetting.ConnectionString);
+            _defaultMongoClient = new MongoClient(_mongoDatabaseSetting.ConnectionString);
         }
+
+        public MongoClient DefaultMongoClient { get => _defaultMongoClient;  }
 
         public IMongoDatabase GetDatabase()
         {
-            var mongoClient = GetMongoClient();
-            return mongoClient.GetDatabase(_mongoDatabaseSetting.Database ?? "");
+            return _defaultMongoClient.GetDatabase(_mongoDatabaseSetting.Database ?? "");
         }
     }
 }

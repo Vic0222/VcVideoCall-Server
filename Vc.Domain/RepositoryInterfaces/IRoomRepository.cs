@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Vc.Domain.Entities;
 
@@ -14,5 +15,6 @@ namespace Vc.Domain.RepositoryInterfaces
         Task<Room> GetPrivateRoomAsync(string userId1, string userId2);
         Task<List<Room>> GetUserRoomsAsync(string userId);
         Task<bool> IsUserInRoomAsync(string userId, string roomId);
+        Task UpdateRoomUserPhotoUrl(string userId, string photoUrl, CancellationToken cancellationToken);
     }
 }

@@ -10,13 +10,15 @@ using MongoDB.Driver;
 using AutoMapper;
 using Vc.Common;
 using System.Linq;
+using Vc.DAL.Mongo.Transactions;
+using System.Threading;
 
 namespace Vc.DAL.Mongo.Repositories
 {
     public class RoomRepository : AbstractRepository<Dal.Room>, IRoomRepository
     {
 
-        public RoomRepository(ClientManager clientManager, IMapper mapper) : base(clientManager, mapper, collectionName: "rooms")
+        public RoomRepository(ClientManager clientManager, IMapper mapper, MongoDatabaseSessionManager mongoDatabaseSessionManager) : base(clientManager, mapper, collectionName: "rooms", mongoDatabaseSessionManager)
         {
         }
 
@@ -53,6 +55,25 @@ namespace Vc.DAL.Mongo.Repositories
         {
             var room = await _collection.FindAsync(r => r.Id == roomId && r.RoomUsers.Any(ru => ru.UserId == userId));
             return room.IsNotNull();
+        }
+
+        public async Task UpdateRoomUserPhotoUrl(string userId, string photoUrl, CancellationToken cancellationToken)
+        {
+            //update photo url on room users first
+            var filter = Builders<Dal.Room>.Filter.ElemMatch(m => m.RoomUsers, builder => builder.UserId == userId);
+
+
+            var update = Builders<Dal.Room>.Update.Set("RoomUsers.$.PhotoUrl", photoUrl);
+            if (_mongoDatabaseSessionManager?.MongoDatabaseSession?.CurrentSession != null)
+            {
+                await _collection.UpdateManyAsync(_mongoDatabaseSessionManager?.MongoDatabaseSession?.CurrentSession, filter, update, options: null, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                await _collection.UpdateManyAsync(filter, update, options: null, cancellationToken: cancellationToken);
+            }
+
+            
         }
     }
 }

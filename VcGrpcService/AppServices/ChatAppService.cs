@@ -17,8 +17,16 @@ namespace VcGrpcService.AppServices
 {
     public class ChatAppService : AbstractAppService
     {
+        /// <summary>
+        /// Holds online users id. Should move to cache db like redis
+        /// </summary>
         private ConcurrentDictionary<string, IServerStreamWriter<Proto.JoinResponse>> _onlineUsers = new ConcurrentDictionary<string, IServerStreamWriter<Proto.JoinResponse>>();
+
+        /// <summary>
+        /// Holds ongoing call offers. Should move to cache db like redis 
+        /// </summary>
         private ConcurrentDictionary<string, CallInfo> _onGoingCallOffer = new ConcurrentDictionary<string, CallInfo>();
+
         private readonly ILogger<ChatAppService> _logger;
         private readonly IRoomRepository _roomRepository;
         private readonly IMessageRepository _messageRepository;
@@ -34,6 +42,7 @@ namespace VcGrpcService.AppServices
 
         public void AddOnlineUser(string userId, IServerStreamWriter<Proto.JoinResponse> responseStream)
         {
+
             _logger.LogDebug("Adding user to online users. userId : {0}", userId);
             //remove first if already existing to refresh
             _onlineUsers.TryRemove(userId, out _);
@@ -327,9 +336,12 @@ namespace VcGrpcService.AppServices
             
 
             string name = room.Name;
+            string photoUrl = room.PhotoUrl;
+
             if (room.Type == RoomType.Private)
             {
                 name = room.RoomUsers.FirstOrDefault(ru => ru.UserId != currentUserId)?.Nickname ?? string.Empty;
+                photoUrl = room.RoomUsers.FirstOrDefault(ru => ru.UserId != currentUserId)?.PhotoUrl ?? string.Empty;
             }
             Message message = await _messageRepository.GetRoomLastMessageAsync(room.Id);
             string lastMessage = message?.MessageBody ?? string.Empty;
@@ -337,7 +349,7 @@ namespace VcGrpcService.AppServices
             bool isOnline = room.RoomUsers.Select(ru => ru.UserId).Intersect(_onlineUsers.Where(u => u.Key != currentUserId).Select(u => u.Key)).Any();
             
 
-            return new Proto.Room() { Id = room.Id, Name = name, Type = covertRoomType(room.Type),  LastMessage = lastMessage, LastMessageDatetime = unixTimestamp, IsOnline = isOnline };
+            return new Proto.Room() { Id = room.Id, Name = name, Type = covertRoomType(room.Type),  LastMessage = lastMessage, LastMessageDatetime = unixTimestamp, IsOnline = isOnline, PhotoUrl= photoUrl };
         }
 
         private Proto.RoomType covertRoomType(RoomType roomType)

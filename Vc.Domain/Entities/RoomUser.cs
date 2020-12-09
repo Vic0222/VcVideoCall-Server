@@ -9,5 +9,6 @@ namespace Vc.Domain.Entities
         public string RoomId { get; set; }
         public string UserId { get; set; }
         public string Nickname { get; set; }
+        public string PhotoUrl { get; set; }
     }
 }

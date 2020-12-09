@@ -14,6 +14,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Vc.DAL.Mongo;
 using Vc.DAL.Mongo.Repositories;
+using Vc.DAL.Mongo.Transactions;
+using Vc.Domain.DataHelper;
 using Vc.Domain.RepositoryInterfaces;
 using VcGrpcService.AppServices;
 using VcGrpcService.Middlewares;
@@ -45,7 +47,10 @@ namespace VcGrpcService
             services.AddAutoMapper(typeof(AbstractRepository<>));
             services.AddSingleton<ChatAppService>();
             services.AddSingleton<UserAppService>();
-            services.AddTransient<ClientManager>();
+            services.AddSingleton<ClientManager>();
+            services.AddSingleton<ITransactionManager, MongoDatabaseSessionManager>();
+            services.AddSingleton(serivceProvider => serivceProvider.GetService<ITransactionManager>() as MongoDatabaseSessionManager); ;
+
             services.Scan(scan =>
                 scan.FromAssembliesOf(typeof(AbstractRepository<>))
                 .AddClasses(classes => classes.AssignableTo<IRepository>())
