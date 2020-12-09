@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "GrpcClient": {
+      "commandName": "Project",
+      "commandLineArgs": "searchuser v.g.",
+      "environmentVariables": {
+        "Environment": "development.local"
+      }
+    }
+  }
+}

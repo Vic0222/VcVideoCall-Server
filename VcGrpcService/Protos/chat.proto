@@ -15,6 +15,7 @@ service Chat {
   rpc SendCallAnswer(CallAnswerRequest) returns (CallAnswerResponse);
   rpc SendIceCandidate(IceCandidateRequest) returns (IceCandidateResponse);
   rpc SendPeerConnectionClose(PeerConnectionCloseRequest) returns (PeerConnectionCloseResponse);
+  rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
 }
 
 message PeerConnectionCloseRequest {
@@ -172,4 +173,19 @@ message Message {
   string message_body = 3;
   string sender_id = 4;
   int64 date_sent = 5;
+}
+
+message SearchUserRequest{
+	string keyword = 1;
+}
+
+message SearchUserResponse {
+  repeated User users = 1;
+}
+
+message User {
+  string user_id = 1;
+  string email = 2;
+  string username = 3;
+  string photo_url = 4;
 }

@@ -44,7 +44,9 @@ namespace VcGrpcService
 
 
             services.AddGrpc();
-            services.AddAutoMapper(typeof(AbstractRepository<>));
+            services.AddGrpcReflection();
+
+            services.AddAutoMapper(typeof(AbstractRepository<>), typeof(ChatAppService));
             services.AddSingleton<ChatAppService>();
             services.AddSingleton<UserAppService>();
             services.AddSingleton<ClientManager>();
@@ -98,6 +100,12 @@ namespace VcGrpcService
                 {
                     await context.Response.WriteAsync("Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
                 });
+
+                if (env.IsDevelopment())
+                {
+                    endpoints.MapGrpcReflectionService();
+                }
+
             });
         }
     }

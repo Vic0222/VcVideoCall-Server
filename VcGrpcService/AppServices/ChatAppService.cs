@@ -1,4 +1,5 @@
-﻿using Grpc.Core;
+﻿using AutoMapper;
+using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -31,13 +32,15 @@ namespace VcGrpcService.AppServices
         private readonly IRoomRepository _roomRepository;
         private readonly IMessageRepository _messageRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
 
-        public ChatAppService(ILogger<ChatAppService> logger, IRoomRepository roomRepository, IMessageRepository messageRepository, IUserRepository userRepository)
+        public ChatAppService(ILogger<ChatAppService> logger, IRoomRepository roomRepository, IMessageRepository messageRepository, IUserRepository userRepository, IMapper mapper)
         {
             _logger = logger;
             _roomRepository = roomRepository;
             _messageRepository = messageRepository;
             _userRepository = userRepository;
+            _mapper = mapper;
         }
 
         public void AddOnlineUser(string userId, IServerStreamWriter<Proto.JoinResponse> responseStream)
@@ -146,7 +149,7 @@ namespace VcGrpcService.AppServices
             }
 
 
-            return response;
+            return  await Task.FromResult(response);
 
         }
 
@@ -180,6 +183,23 @@ namespace VcGrpcService.AppServices
             }
             return new Proto.IceCandidateResponse();
 
+        }
+
+        public async Task<Proto.SearchUserResponse> SearchUser(Proto.SearchUserRequest request)
+        {
+            _logger.LogDebug("Searching for {0}", request.Keyword);
+
+            var users = await _userRepository.GetUsersUsingKeywordAsync(request.Keyword);
+
+            return createSearchUserResponse(users);
+
+        }
+
+        private Proto.SearchUserResponse createSearchUserResponse(List<User> users)
+        {
+            var response = new Proto.SearchUserResponse();
+            response.Users.AddRange(_mapper.Map<List<Proto.User>>(users));
+            return response;
         }
 
         public async Task<Proto.PeerConnectionCloseResponse> SendPeerConnectionClose(string senderId, Proto.PeerConnectionCloseRequest request)

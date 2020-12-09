@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Vc.Common;
 using System.Threading;
 using Vc.DAL.Mongo.Transactions;
+using System.Text.RegularExpressions;
 
 namespace Vc.DAL.Mongo.Repositories
 {
@@ -28,10 +29,15 @@ namespace Vc.DAL.Mongo.Repositories
             return domUser;
         }
 
-        public async Task<List<Dom.User>> GetUsersWithRoomIdAsync(string roomId)
+
+        public async Task<List<Dom.User>> GetUsersUsingKeywordAsync(string keyword, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            keyword = Regex.Escape(keyword);
+            var filter = Builders<Dal.User>.Filter.Regex(m => m.Email, keyword);
+            var dalUsers = await _collection.FindAsync<Dal.User>(filter, cancellationToken: cancellationToken);
+            return _mapper.Map<List<Dom.User>>(dalUsers.ToList());
         }
+
 
         public async Task UpdateUserAsync(string id, Dom.User user, CancellationToken cancellationToken = default)
         {

@@ -167,7 +167,21 @@ namespace VcGrpcService.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Send offer video call error Sender : {1}", senderId);
+                _logger.LogError(ex, "Send offer video call error Sender : {0}", senderId);
+                throw;
+            }
+        }
+
+        public override async Task<SearchUserResponse> SearchUser(SearchUserRequest request, ServerCallContext context)
+        {
+            string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
+            try
+            {
+                return await _chatAppService.SearchUser(request);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "User {0} searching  for {1}", senderId, request.Keyword);
                 throw;
             }
         }
