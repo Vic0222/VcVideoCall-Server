@@ -137,7 +137,7 @@ namespace VcGrpcService.AppServices
                 callInfo.ReceiverId = receiverId;
                 switch (status)
                 {
-                    case Proto.CallOfferStatus.Accepted:
+                    case Proto.CallOfferStatus.CallOfferAccepted:
                         callInfo.Status = CallStatus.Accepted;
                         break;
                     default:
@@ -183,6 +183,26 @@ namespace VcGrpcService.AppServices
             }
             return new Proto.IceCandidateResponse();
 
+        }
+
+        public async Task<Proto.GetRoomResponse> GetRoomAsync(string senderId, Proto.GetRoomRequest request, CancellationToken cancellationToken)
+        {
+            _logger.LogDebug("Getting room with roomId : {0} or userId : {1}", request.RoomId, request.UserId);
+            Room room = null;
+            if (request.Type == Proto.GetRoomType.FromRoomId)
+            {
+                room = await _roomRepository.GetRoomAsync(request.RoomId);
+            }
+            else if(request.Type == Proto.GetRoomType.FromUserIdPrivate)
+            {
+                room = await _roomRepository.GetPrivateRoomAsync(senderId, request.UserId);
+            }
+            var response = new Proto.GetRoomResponse();
+            if (room == null)
+            {
+                response.RoomStatus = Proto.RoomStatus.RoomNotExisting;
+            }
+            return response;
         }
 
         public async Task<Proto.SearchUserResponse> SearchUser(Proto.SearchUserRequest request)
@@ -307,16 +327,16 @@ namespace VcGrpcService.AppServices
                 callInfo = callInfo1;
             }
 
-            var status = Proto.CallOfferStatus.Rejected;
+            var status = Proto.CallOfferStatus.CallOfferRejected;
             if (callInfo != null)
             {
                 switch (callInfo.Status)
                 {
                     case CallStatus.Accepted:
-                        status = Proto.CallOfferStatus.Accepted;
+                        status = Proto.CallOfferStatus.CallOfferAccepted;
                         break;
                     default:
-                        status = Proto.CallOfferStatus.Rejected;
+                        status = Proto.CallOfferStatus.CallOfferRejected;
                         break;
                 }
             }

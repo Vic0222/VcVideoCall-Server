@@ -9,6 +9,7 @@ service Chat {
   // Sends a greeting
   rpc Join(JoinRequest) returns (stream JoinResponse);
   rpc GetRooms(GetRoomsRequest) returns (GetRoomsResponse);
+  rpc GetRoom(GetRoomRequest) returns (GetRoomResponse);
   rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
   rpc SendMessageRequest(MessageRequest) returns (MessageResponse);
   rpc SendCallOffer(CallOfferRequest) returns (CallOfferResponse);
@@ -105,8 +106,8 @@ message CallOfferNotification{
 }
 
 enum CallOfferStatus{
-	Rejected = 0;
-	Accepted = 1;
+	CallOfferRejected = 0;
+	CallOfferAccepted = 1;
 }
 
 
@@ -117,8 +118,8 @@ message CallSignal{
 }
 
 enum CallSignalType{
-	Offer = 0;
-	Answer = 1;
+	CallSignalOffer = 0;
+	CallSignalAnswer = 1;
 }
 
 message MessageNotification {
@@ -141,6 +142,30 @@ message GetRoomsResponse{
   repeated Room rooms = 1;
 }
 
+message GetRoomRequest{
+  GetRoomType type = 1;
+  string user_id = 2;
+  string room_id = 3;
+}
+
+enum GetRoomType{
+  GetRoomTypeFromUserIdPrivate = 0;
+  GetRoomTypeFromRoomId = 1;
+}
+
+message GetRoomResponse{
+  RoomStatus room_status = 1;
+  Room room = 2;
+}
+
+enum RoomStatus{
+  RoomNotExisting = 0;
+  RoomInvitePending = 1;
+  RoomAcceptPending = 2;
+  RoomAccepted = 3;
+}
+
+
 message Room{
   string id = 1;
   string name = 2;
@@ -149,12 +174,13 @@ message Room{
   int64 last_message_datetime = 5;
   bool is_online = 6;
   string photo_url = 7;
+  RoomStatus status = 8;
 }
 
 enum RoomType {
-  Unknown = 0;
-  Private = 1;
-  Group = 2;
+  RoomTypeUnknown = 0;
+  RoomTypePrivate = 1;
+  RoomTypeGroup = 2;
 }
 
 message GetMessagesRequest{
