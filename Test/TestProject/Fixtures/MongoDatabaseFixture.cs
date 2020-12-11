@@ -35,8 +35,8 @@ namespace TestProject.Fixtures
             users.InsertOne(user2);
 
             var room = new Room() { Id = "5fbcfc82231676fa807c5d3e", Name = "wUnSd3SPUhWngjOsXK83EkPVFyW2-88Ne5eX2C6ZMsG0wZCATJnEMFWH3", Type = 1 };
-            room.RoomUsers.Add(new RoomUser() { UserId = "wUnSd3SPUhWngjOsXK83EkPVFyW2", Nickname = "Vic", PhotoUrl = "https://lh3.googleusercontent.com/-9-6MMBQxGMg/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuck8zaDNdXmlNSHMIqfhcWQVZNMO8Q/s96-c/photo.jpg" });
-            room.RoomUsers.Add(new RoomUser() { UserId = "88Ne5eX2C6ZMsG0wZCATJnEMFWH3", Nickname = "Alb", PhotoUrl = "https://lh3.googleusercontent.com/-WOo0vt6zQcs/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucl4khkgDvVRQS_7iIPPLiVW0QPPag/s96-c/photo.jpg" });
+            room.RoomUsers.Add(new RoomUser() { UserId = "wUnSd3SPUhWngjOsXK83EkPVFyW2", Nickname = "Vic", Status = RoomUserStatus.InvitePending, PhotoUrl = "https://lh3.googleusercontent.com/-9-6MMBQxGMg/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuck8zaDNdXmlNSHMIqfhcWQVZNMO8Q/s96-c/photo.jpg" });
+            room.RoomUsers.Add(new RoomUser() { UserId = "88Ne5eX2C6ZMsG0wZCATJnEMFWH3", Nickname = "Alb", Status = RoomUserStatus.AcceptPending, PhotoUrl = "https://lh3.googleusercontent.com/-WOo0vt6zQcs/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucl4khkgDvVRQS_7iIPPLiVW0QPPag/s96-c/photo.jpg" });
 
             var rooms = database.GetCollection<Room>("rooms");
             rooms.InsertOne(room);

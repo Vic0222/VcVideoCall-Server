@@ -14,7 +14,7 @@ namespace TestProject.Helpers
 {
     public static class AuthenticationHelper
     {
-        public static async Task AddIdToken(this Metadata headers, string userKey, IConfiguration configuration)
+        public static async Task AddIdTokenAsync(this Metadata headers, string userKey, IConfiguration configuration)
         {
             using (var httpClient = new HttpClient())
             {

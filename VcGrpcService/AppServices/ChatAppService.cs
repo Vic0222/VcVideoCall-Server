@@ -194,6 +194,11 @@ namespace VcGrpcService.AppServices
             {
                 response.RoomStatus = Proto.RoomStatus.RoomNotExisting;
             }
+            else
+            {
+                response.Room = await createRoomReplyAsync(senderId, room);
+                response.RoomStatus = response.Room.Status;
+            }
             return response;
         }
 
@@ -358,12 +363,12 @@ namespace VcGrpcService.AppServices
             var roomList = new Proto.GetRoomsResponse();
             foreach (var room in rooms)
             {
-                roomList.Rooms.Add(await createRoomReply(userId, room));
+                roomList.Rooms.Add(await createRoomReplyAsync(userId, room));
             }
             return roomList;
         }
         //test
-        private async Task<Proto.Room> createRoomReply(string currentUserId, Room room)
+        private async Task<Proto.Room> createRoomReplyAsync(string currentUserId, Room room)
         {
             
 
@@ -377,11 +382,26 @@ namespace VcGrpcService.AppServices
             }
             Message message = await _messageRepository.GetRoomLastMessageAsync(room.Id);
             string lastMessage = message?.MessageBody ?? string.Empty;
-            long unixTimestamp = message.DateSent.IsValid() ? ((DateTimeOffset)message.DateSent).ToUnixTimeSeconds() : 0;
+            long unixTimestamp = message?.DateSent.IsValid() ?? false ? ((DateTimeOffset)message.DateSent).ToUnixTimeSeconds() : 0;
             bool isOnline = room.RoomUsers.Select(ru => ru.UserId).Intersect(_onlineUserManager.OnlineUsers.Where(u => u.Key != currentUserId).Select(u => u.Key)).Any();
-            
+            var domStatus = room.RoomUsers.Where(ru => ru.UserId == currentUserId).Select(ru => ru.Status).FirstOrDefault();
+            var protoStatus = Proto.RoomStatus.RoomNotExisting;
+            switch (domStatus)
+            {
+                case RoomUserStatus.InvitePending:
+                    protoStatus = Proto.RoomStatus.RoomInvitePending;
+                    break;
+                case RoomUserStatus.AcceptPending:
+                    protoStatus = Proto.RoomStatus.RoomAcceptPending;
+                    break;
+                case RoomUserStatus.Accepted:
+                    protoStatus = Proto.RoomStatus.RoomAccepted;
+                    break;
+                default:
+                    break;
+            }
 
-            return new Proto.Room() { Id = room.Id, Name = name, Type = covertRoomType(room.Type),  LastMessage = lastMessage, LastMessageDatetime = unixTimestamp, IsOnline = isOnline, PhotoUrl= photoUrl };
+            return new Proto.Room() { Id = room.Id, Name = name, Type = covertRoomType(room.Type),  LastMessage = lastMessage, LastMessageDatetime = unixTimestamp, IsOnline = isOnline, PhotoUrl= photoUrl, Status = protoStatus };
         }
 
         private Proto.RoomType covertRoomType(RoomType roomType)

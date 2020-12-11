@@ -11,7 +11,9 @@ namespace Vc.DAL.Mongo.MapperProfile
     {
         public RoomUserProfile()
         {
-            CreateMap<Dal.RoomUser, Dom.RoomUser>().ReverseMap();
+            CreateMap<Dal.RoomUser, Dom.RoomUser>()
+                .ForMember(dest => dest.Status, cfg => cfg.MapFrom(src => src.Status))
+                .ReverseMap();
         }
     }
 }

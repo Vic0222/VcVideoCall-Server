@@ -35,7 +35,7 @@ namespace TestProject.Tests
         {
             var client = new Chat.ChatClient(_vcServerFixture.GrpcChannel);
             var headers = new Metadata();
-            await headers.AddIdToken("user1", _configuration);
+            await headers.AddIdTokenAsync("user1", _configuration);
             var response = await client.SearchUserAsync(new SearchUserRequest() { Keyword = "v.g.a" }, headers);
 
 

@@ -37,7 +37,7 @@ namespace TestProject.Tests
         private async Task<Metadata> generateMetadata(string userkey)
         {
             var headers = new Metadata();
-            await headers.AddIdToken(userkey, _configuration);
+            await headers.AddIdTokenAsync(userkey, _configuration);
             return headers;
         }
 
