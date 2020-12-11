@@ -49,6 +49,7 @@ namespace VcGrpcService.AppServices
                     //check photo url
                     if (userClaims.FindFirstValue("picture").IsNotNull() && userClaims.FindFirstValue("picture") != user.PhotoUrl)
                     {
+                        user.PhotoUrl = userClaims.FindFirstValue("picture");
                         await _userRepository.UpdateUserPhotoUrlAsync(user.Id, userClaims.FindFirstValue("picture"), cancellationToken);
                         await _roomRepository.UpdateRoomUserPhotoUrl(user.Id, userClaims.FindFirstValue("picture"), cancellationToken);
                         hasChanges = true;

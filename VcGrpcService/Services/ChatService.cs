@@ -186,16 +186,16 @@ namespace VcGrpcService.Services
             }
         }
 
-        public override Task<GetRoomResponse> GetRoom(GetRoomRequest request, ServerCallContext context)
+        public async override Task<GetRoomResponse> GetRoom(GetRoomRequest request, ServerCallContext context)
         {
             string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
             try
             {
-                return await _chatAppService.GetRoomAsync(request, context.CancellationToken);
+                return await _chatAppService.GetRoomAsync(senderId, request, context.CancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "User {0} searching  for {1}", senderId, request.Keyword);
+                _logger.LogError(ex, "User {0} getting room for {0}", senderId, request.UserId);
                 throw;
             }
         }

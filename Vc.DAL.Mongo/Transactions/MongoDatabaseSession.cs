@@ -21,23 +21,39 @@ namespace Vc.DAL.Mongo
 
         public async Task StartSessionAsync()
         {
-            _currentSession = await _clientManager.DefaultMongoClient.StartSessionAsync();
+            if (_clientManager.DefaultMongoClient.Cluster.Description.Type == MongoDB.Driver.Core.Clusters.ClusterType.ReplicaSet)
+            {
+                _currentSession = await _clientManager.DefaultMongoClient.StartSessionAsync();
+
+                _currentSession.StartTransaction();
+            }
+            
         }
 
         public async Task CommitSessionAsync()
         {
-            await _currentSession.CommitTransactionAsync();
+            if (_currentSession != null)
+            {
+                await _currentSession.CommitTransactionAsync();
+            }
+            
         }
 
         public async Task AbortSessionAsync()
         {
-            _currentSession = await _clientManager.DefaultMongoClient.StartSessionAsync();
+            if (_currentSession != null)
+            {
+                await _currentSession.AbortTransactionAsync();
+            }
         }
 
         public void Dispose()
         {
-            _currentSession.Dispose();
-            _currentSession = null;
+            if (_currentSession != null)
+            {
+                _currentSession.Dispose();
+                _currentSession = null;
+            }
         }
     }
 }

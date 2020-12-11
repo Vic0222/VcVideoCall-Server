@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "TestProject": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "test.local"
+      }
+    }
+  }
+}

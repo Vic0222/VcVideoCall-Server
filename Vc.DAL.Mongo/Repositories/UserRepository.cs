@@ -46,7 +46,14 @@ namespace Vc.DAL.Mongo.Repositories
 
             var dalUser = _mapper.Map<Dal.User>(user);
 
-            await _collection.ReplaceOneAsync(filter, dalUser, cancellationToken: cancellationToken);
+            if (_mongoDatabaseSessionManager?.MongoDatabaseSession?.CurrentSession != null)
+            {
+                await _collection.ReplaceOneAsync(_mongoDatabaseSessionManager?.MongoDatabaseSession?.CurrentSession, filter, dalUser, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                await _collection.ReplaceOneAsync(filter, dalUser, cancellationToken: cancellationToken);
+            }
         }
 
         /// <summary>

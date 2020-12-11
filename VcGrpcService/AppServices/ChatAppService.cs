@@ -12,6 +12,7 @@ using Vc.Domain.Entities;
 using Vc.Domain.Exceptions;
 using Vc.Domain.RepositoryInterfaces;
 using VcGrpcService.CallHelpers;
+using VcGrpcService.Managers;
 using Proto = VcGrpcService.Proto;
 
 namespace VcGrpcService.AppServices
@@ -19,24 +20,21 @@ namespace VcGrpcService.AppServices
     public class ChatAppService : AbstractAppService
     {
         /// <summary>
-        /// Holds online users id. Should move to cache db like redis
-        /// </summary>
-        private ConcurrentDictionary<string, IServerStreamWriter<Proto.JoinResponse>> _onlineUsers = new ConcurrentDictionary<string, IServerStreamWriter<Proto.JoinResponse>>();
-
-        /// <summary>
         /// Holds ongoing call offers. Should move to cache db like redis 
         /// </summary>
         private ConcurrentDictionary<string, CallInfo> _onGoingCallOffer = new ConcurrentDictionary<string, CallInfo>();
 
         private readonly ILogger<ChatAppService> _logger;
+        private readonly OnlineUserManager _onlineUserManager;
         private readonly IRoomRepository _roomRepository;
         private readonly IMessageRepository _messageRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
-        public ChatAppService(ILogger<ChatAppService> logger, IRoomRepository roomRepository, IMessageRepository messageRepository, IUserRepository userRepository, IMapper mapper)
+        public ChatAppService(ILogger<ChatAppService> logger, OnlineUserManager onlineUserManager, IRoomRepository roomRepository, IMessageRepository messageRepository, IUserRepository userRepository, IMapper mapper)
         {
             _logger = logger;
+            _onlineUserManager = onlineUserManager;
             _roomRepository = roomRepository;
             _messageRepository = messageRepository;
             _userRepository = userRepository;
@@ -45,17 +43,13 @@ namespace VcGrpcService.AppServices
 
         public void AddOnlineUser(string userId, IServerStreamWriter<Proto.JoinResponse> responseStream)
         {
-
-            _logger.LogDebug("Adding user to online users. userId : {0}", userId);
-            //remove first if already existing to refresh
-            _onlineUsers.TryRemove(userId, out _);
-            _onlineUsers.TryAdd(userId, responseStream);
+            _onlineUserManager.AddOnlineUser(userId, responseStream);
         }
 
         public void RemoveOnlineUser(string userId)
         {
-            _logger.LogDebug("Removing user from online users. userId : {0}", userId);
-            _onlineUsers.TryRemove(userId, out IServerStreamWriter<Proto.JoinResponse> stream);
+            
+            _onlineUserManager.RemoveOnlineUser(userId);
         }
 
         public async Task BroadcastMessage(string senderId, Proto.MessageRequest message)
@@ -81,7 +75,7 @@ namespace VcGrpcService.AppServices
 
                 foreach (var user in room.RoomUsers)
                 {
-                    if (_onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
+                    if (_onlineUserManager.OnlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
                     {
                         try
                         {
@@ -90,7 +84,7 @@ namespace VcGrpcService.AppServices
                         catch (Exception ex)
                         {
                             _logger.LogError(ex, "Stream write error removing user from online users" );
-                            _onlineUsers.TryRemove(user.UserId, out _);
+                            _onlineUserManager.OnlineUsers.TryRemove(user.UserId, out _);
                         }
                         
                     }
@@ -165,7 +159,7 @@ namespace VcGrpcService.AppServices
                 IEnumerable<RoomUser> otherRoomUsers = room.RoomUsers.Where(ru => ru.UserId != senderId);
                 foreach (var user in otherRoomUsers)
                 {
-                    if (_onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
+                    if (_onlineUserManager.OnlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
                     {
                         try
                         {
@@ -174,7 +168,7 @@ namespace VcGrpcService.AppServices
                         catch (Exception ex)
                         {
                             _logger.LogError(ex, "SendIceCandidate stream write error. Removing user from online users");
-                            _onlineUsers.TryRemove(user.UserId, out _);
+                            _onlineUserManager.OnlineUsers.TryRemove(user.UserId, out _);
                         }
 
                     }
@@ -244,7 +238,7 @@ namespace VcGrpcService.AppServices
 
                 foreach (var user in room.RoomUsers.Where(ru => ru.UserId != senderId))
                 {
-                    if (_onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
+                    if (_onlineUserManager.OnlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
                     {
                         try
                         {
@@ -253,7 +247,7 @@ namespace VcGrpcService.AppServices
                         catch (Exception ex)
                         {
                             _logger.LogError(ex, "Stream write error removing user from online users");
-                            _onlineUsers.TryRemove(user.UserId, out _);
+                            _onlineUserManager.OnlineUsers.TryRemove(user.UserId, out _);
                         }
 
                     }
@@ -289,7 +283,7 @@ namespace VcGrpcService.AppServices
                 IEnumerable<RoomUser> otherRoomUsers = room.RoomUsers.Where(ru => ru.UserId != senderId);
                 foreach (var user in otherRoomUsers)
                 {
-                    if (_onlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
+                    if (_onlineUserManager.OnlineUsers.TryGetValue(user.UserId, out IServerStreamWriter<Proto.JoinResponse> stream))
                     {
                         try
                         {
@@ -301,7 +295,7 @@ namespace VcGrpcService.AppServices
                         catch (Exception ex)
                         {
                             _logger.LogError(ex, "Stream write error removing user from online users");
-                            _onlineUsers.TryRemove(user.UserId, out _);
+                            _onlineUserManager.OnlineUsers.TryRemove(user.UserId, out _);
                         }
 
                     }
@@ -386,7 +380,7 @@ namespace VcGrpcService.AppServices
             Message message = await _messageRepository.GetRoomLastMessageAsync(room.Id);
             string lastMessage = message?.MessageBody ?? string.Empty;
             long unixTimestamp = message.DateSent.IsValid() ? ((DateTimeOffset)message.DateSent).ToUnixTimeSeconds() : 0;
-            bool isOnline = room.RoomUsers.Select(ru => ru.UserId).Intersect(_onlineUsers.Where(u => u.Key != currentUserId).Select(u => u.Key)).Any();
+            bool isOnline = room.RoomUsers.Select(ru => ru.UserId).Intersect(_onlineUserManager.OnlineUsers.Where(u => u.Key != currentUserId).Select(u => u.Key)).Any();
             
 
             return new Proto.Room() { Id = room.Id, Name = name, Type = covertRoomType(room.Type),  LastMessage = lastMessage, LastMessageDatetime = unixTimestamp, IsOnline = isOnline, PhotoUrl= photoUrl };

@@ -18,6 +18,7 @@ using Vc.DAL.Mongo.Transactions;
 using Vc.Domain.DataHelper;
 using Vc.Domain.RepositoryInterfaces;
 using VcGrpcService.AppServices;
+using VcGrpcService.Managers;
 using VcGrpcService.Middlewares;
 using VcGrpcService.Services;
 
@@ -46,12 +47,14 @@ namespace VcGrpcService
             services.AddGrpc();
             services.AddGrpcReflection();
 
+            //need to fix life times
             services.AddAutoMapper(typeof(AbstractRepository<>), typeof(ChatAppService));
-            services.AddSingleton<ChatAppService>();
-            services.AddSingleton<UserAppService>();
-            services.AddSingleton<ClientManager>();
-            services.AddSingleton<ITransactionManager, MongoDatabaseSessionManager>();
-            services.AddSingleton(serivceProvider => serivceProvider.GetService<ITransactionManager>() as MongoDatabaseSessionManager); ;
+            services.AddSingleton<OnlineUserManager>();
+            services.AddScoped<ChatAppService>();
+            services.AddScoped<UserAppService>();
+            services.AddScoped<ClientManager>();
+            services.AddScoped<ITransactionManager, MongoDatabaseSessionManager>();
+            services.AddScoped(serivceProvider => serivceProvider.GetService<ITransactionManager>() as MongoDatabaseSessionManager); ;
 
             services.Scan(scan =>
                 scan.FromAssembliesOf(typeof(AbstractRepository<>))
