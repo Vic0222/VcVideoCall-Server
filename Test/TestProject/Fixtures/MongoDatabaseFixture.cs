@@ -28,10 +28,10 @@ namespace TestProject.Fixtures
             var database = defaultMongoClient.GetDatabase(databaseName);
             var users = database.GetCollection<User>("users");
 
-            var user1 = new User() { Id = "wUnSd3SPUhWngjOsXK83EkPVFyW2", Username = "Vic" };
+            var user1 = new User() { Id = "wUnSd3SPUhWngjOsXK83EkPVFyW2", Email = "v.g.albonian@gmail.com", Username = "Vic", PhotoUrl = "https://lh3.googleusercontent.com/-9-6MMBQxGMg/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuck8zaDNdXmlNSHMIqfhcWQVZNMO8Q/s96-c/photo.jpg" };
             users.InsertOne(user1);
 
-            var user2 = new User() { Id = "88Ne5eX2C6ZMsG0wZCATJnEMFWH3", Username = "Alb" };
+            var user2 = new User() { Id = "88Ne5eX2C6ZMsG0wZCATJnEMFWH3", Email = "v.g.albonian.dev@gmail.com", Username = "Alb", PhotoUrl = "https://lh3.googleusercontent.com/-WOo0vt6zQcs/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucl4khkgDvVRQS_7iIPPLiVW0QPPag/s96-c/photo.jpg" };
             users.InsertOne(user2);
 
             var room = new Room() { Id = "5fbcfc82231676fa807c5d3e", Name = "wUnSd3SPUhWngjOsXK83EkPVFyW2-88Ne5eX2C6ZMsG0wZCATJnEMFWH3", Type = 1 };

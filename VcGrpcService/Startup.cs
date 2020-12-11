@@ -50,6 +50,7 @@ namespace VcGrpcService
             //need to fix life times
             services.AddAutoMapper(typeof(AbstractRepository<>), typeof(ChatAppService));
             services.AddSingleton<OnlineUserManager>();
+            services.AddSingleton<OngoingCallOfferManager>();
             services.AddScoped<ChatAppService>();
             services.AddScoped<UserAppService>();
             services.AddScoped<ClientManager>();

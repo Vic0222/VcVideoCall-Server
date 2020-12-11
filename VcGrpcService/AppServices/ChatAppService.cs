@@ -19,21 +19,19 @@ namespace VcGrpcService.AppServices
 {
     public class ChatAppService : AbstractAppService
     {
-        /// <summary>
-        /// Holds ongoing call offers. Should move to cache db like redis 
-        /// </summary>
-        private ConcurrentDictionary<string, CallInfo> _onGoingCallOffer = new ConcurrentDictionary<string, CallInfo>();
 
         private readonly ILogger<ChatAppService> _logger;
+        private readonly OngoingCallOfferManager _ongoingCallOfferManager;
         private readonly OnlineUserManager _onlineUserManager;
         private readonly IRoomRepository _roomRepository;
         private readonly IMessageRepository _messageRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
-        public ChatAppService(ILogger<ChatAppService> logger, OnlineUserManager onlineUserManager, IRoomRepository roomRepository, IMessageRepository messageRepository, IUserRepository userRepository, IMapper mapper)
+        public ChatAppService(ILogger<ChatAppService> logger, OngoingCallOfferManager ongoingCallOfferManager, OnlineUserManager onlineUserManager, IRoomRepository roomRepository, IMessageRepository messageRepository, IUserRepository userRepository, IMapper mapper)
         {
             _logger = logger;
+            _ongoingCallOfferManager = ongoingCallOfferManager;
             _onlineUserManager = onlineUserManager;
             _roomRepository = roomRepository;
             _messageRepository = messageRepository;
@@ -125,7 +123,7 @@ namespace VcGrpcService.AppServices
         {
             Proto.CallAnswerResponse response = null;
 
-            if (_onGoingCallOffer.TryGetValue(roomId, out CallInfo callInfo))
+            if (_ongoingCallOfferManager.OnGoingCallOffer.TryGetValue(roomId, out CallInfo callInfo))
             {
                 callInfo.RtcSessionDescription = rtcSessionDescription;
                 callInfo.ReceiverId = receiverId;
@@ -267,9 +265,9 @@ namespace VcGrpcService.AppServices
         public async Task<Proto.CallOfferResponse> SendCallOfferAsync(string senderId, string roomId, Proto.RtcSessionDescription rtcSessionDescription, CancellationToken cancellationToken)
         {
             CallInfo callInfo = new CallInfo() { Status = CallStatus.Ongoing };
-            _onGoingCallOffer.TryRemove(roomId ?? "", out _ );
+            _ongoingCallOfferManager.OnGoingCallOffer.TryRemove(roomId ?? "", out _ );
 
-            _onGoingCallOffer.TryAdd(roomId ?? "", callInfo);
+            _ongoingCallOfferManager.OnGoingCallOffer.TryAdd(roomId ?? "", callInfo);
 
             int availableRoomUsers = 0;
 
@@ -315,7 +313,7 @@ namespace VcGrpcService.AppServices
                 while (callInfo1.IsNotNull() && callInfo1.Status == CallStatus.Ongoing && !cancellationToken.IsCancellationRequested && (DateTime.Now - starTime) <= hardTimeout)
                 {
                     await Task.Delay(1000);
-                    _onGoingCallOffer.TryGetValue(roomId, out callInfo1);
+                    _ongoingCallOfferManager.OnGoingCallOffer.TryGetValue(roomId, out callInfo1);
                 }
 
                 callInfo = callInfo1;
@@ -335,9 +333,9 @@ namespace VcGrpcService.AppServices
                 }
             }
 
-            
 
-            _onGoingCallOffer.TryRemove(roomId, out _);
+
+            _ongoingCallOfferManager.OnGoingCallOffer.TryRemove(roomId, out _);
 
             return new Proto.CallOfferResponse() { Status = status, RtcSessionDescription = callInfo?.RtcSessionDescription, ReceiverId = callInfo?.ReceiverId };
 

@@ -14,12 +14,8 @@ using VcGrpcService.Proto;
 
 namespace TestProject.Tests
 {
-    public class Tests
+    public class JoinTest
     {
-        public Tests()
-        {
-            
-        }
         private IConfigurationRoot _configuration;
         private VcServerFixture _vcServerFixture;
 
