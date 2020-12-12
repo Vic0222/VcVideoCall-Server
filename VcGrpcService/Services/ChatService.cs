@@ -174,10 +174,11 @@ namespace VcGrpcService.Services
 
         public override async Task<SearchUserResponse> SearchUser(SearchUserRequest request, ServerCallContext context)
         {
+            
             string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
             try
             {
-                return await _chatAppService.SearchUser(request);
+                return await _chatAppService.SearchUser(senderId, request);
             }
             catch (Exception ex)
             {

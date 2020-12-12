@@ -31,7 +31,7 @@ namespace TestProject.Tests
         }
 
         [Test]
-        public async Task ShouldRetreiveTwoUsers()
+        public async Task ShouldRetreiveUsers()
         {
             var client = new Chat.ChatClient(_vcServerFixture.GrpcChannel);
             var headers = new Metadata();
@@ -39,8 +39,8 @@ namespace TestProject.Tests
             var response = await client.SearchUserAsync(new SearchUserRequest() { Keyword = "v.g.a" }, headers);
 
 
-            Assert.GreaterOrEqual(response.Users.Count, 2, "User count should be greater than 2.");
-            Assert.NotNull(response.Users.FirstOrDefault(u => u.UserId == "wUnSd3SPUhWngjOsXK83EkPVFyW2"), "User with id wUnSd3SPUhWngjOsXK83EkPVFyW2 not found.");
+            Assert.AreEqual(1, response.Users.Count, "User count should only be 1.");
+            Assert.Null(response.Users.FirstOrDefault(u => u.UserId == "wUnSd3SPUhWngjOsXK83EkPVFyW2"), "User must not be able to search itself.");
             Assert.NotNull(response.Users.FirstOrDefault(u => u.UserId == "88Ne5eX2C6ZMsG0wZCATJnEMFWH3"), "User with id 88Ne5eX2C6ZMsG0wZCATJnEMFWH3 not found.");
         }
     }

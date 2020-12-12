@@ -202,13 +202,20 @@ namespace VcGrpcService.AppServices
             return response;
         }
 
-        public async Task<Proto.SearchUserResponse> SearchUser(Proto.SearchUserRequest request)
+        /// <summary>
+        /// Search user base on a keyword from Proto.SearchUserRequest
+        /// </summary>
+        /// <param name="request"> The Proto.SearchUserRequest that contains the keyword</param>
+        /// <returns>A Proto.SearchUserResponse that contains the users.</returns>
+        public async Task<Proto.SearchUserResponse> SearchUser(string currentUserId, Proto.SearchUserRequest request)
         {
             _logger.LogDebug("Searching for {0}", request.Keyword);
 
             var users = await _userRepository.GetUsersUsingKeywordAsync(request.Keyword);
 
-            return createSearchUserResponse(users);
+            var filteredUsers = users.Where(u => u.Id != currentUserId).ToList();
+
+            return createSearchUserResponse(filteredUsers);
 
         }
 
