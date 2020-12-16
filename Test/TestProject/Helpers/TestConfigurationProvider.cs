@@ -14,6 +14,7 @@ namespace TestProject.Helpers
             ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
             configurationBuilder.AddJsonFile("appsettings.json");
             configurationBuilder.AddJsonFile("appsettings." + (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "test.local") + ".json");
+            configurationBuilder.AddJsonFile("appsettings.test.local.json");
 
             return configurationBuilder.Build();
         }

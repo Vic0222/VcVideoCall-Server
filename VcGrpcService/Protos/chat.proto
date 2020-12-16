@@ -17,6 +17,7 @@ service Chat {
   rpc SendIceCandidate(IceCandidateRequest) returns (IceCandidateResponse);
   rpc SendPeerConnectionClose(PeerConnectionCloseRequest) returns (PeerConnectionCloseResponse);
   rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
+  rpc SendInviteToUser(InviteUserRequest) returns (InviteUserResponse);
 }
 
 message PeerConnectionCloseRequest {
@@ -214,4 +215,12 @@ message User {
   string email = 2;
   string username = 3;
   string photo_url = 4;
+}
+
+message InviteUserRequest {
+  string user_id = 1;
+}
+
+message InviteUserResponse{
+  Room room = 1;
 }

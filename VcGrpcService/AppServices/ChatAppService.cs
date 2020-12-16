@@ -192,6 +192,7 @@ namespace VcGrpcService.AppServices
             var response = new Proto.GetRoomResponse();
             if (room == null)
             {
+                response.Room = await createEmptyRoomReplyAsync(senderId, request.UserId);
                 response.RoomStatus = Proto.RoomStatus.RoomNotExisting;
             }
             else
@@ -199,6 +200,30 @@ namespace VcGrpcService.AppServices
                 response.Room = await createRoomReplyAsync(senderId, room);
                 response.RoomStatus = response.Room.Status;
             }
+            return response;
+        }
+
+        /// <summary>
+        /// Create room with status invite/accept pending
+        /// </summary>
+        /// <param name="senderId"></param>
+        /// <param name="request"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<Proto.InviteUserResponse> SendInviteToUserAsync(string senderId, Proto.InviteUserRequest request, CancellationToken cancellationToken)
+        {
+            //check if private room already exist
+
+            var room = await _roomRepository.GetPrivateRoomAsync(senderId, request.UserId);
+            if (room != null)
+            {
+                throw new Exception("Room already exist");
+            }
+
+            room = await createRoom(senderId, request.UserId, RoomType.Private);
+            room.Id = await _roomRepository.AddRoomAsync(room);
+            var protoRoom = await createRoomReplyAsync(senderId, room);
+            var response = new Proto.InviteUserResponse() { Room = protoRoom };
             return response;
         }
 
@@ -374,13 +399,19 @@ namespace VcGrpcService.AppServices
             }
             return roomList;
         }
-        //test
+        /// <summary>
+        /// create room reply from domain room
+        /// </summary>
+        /// <param name="currentUserId"></param>
+        /// <param name="room"></param>
+        /// <returns></returns>
         private async Task<Proto.Room> createRoomReplyAsync(string currentUserId, Room room)
         {
             
 
-            string name = room.Name;
-            string photoUrl = room.PhotoUrl;
+            string name = room?.Name ?? string.Empty;
+            string photoUrl = room?.PhotoUrl ?? string.Empty;
+
 
             if (room.Type == RoomType.Private)
             {
@@ -411,6 +442,22 @@ namespace VcGrpcService.AppServices
             return new Proto.Room() { Id = room.Id, Name = name, Type = covertRoomType(room.Type),  LastMessage = lastMessage, LastMessageDatetime = unixTimestamp, IsOnline = isOnline, PhotoUrl= photoUrl, Status = protoStatus };
         }
 
+        private async Task<Proto.Room> createEmptyRoomReplyAsync(string currentUserId, string recieverId)
+        {
+            var receiver = await _userRepository.GetUserAsync(recieverId);
+
+            string name = receiver?.Username;
+            string photoUrl = receiver?.PhotoUrl;
+
+            string lastMessage = string.Empty;
+            long unixTimestamp = 0;
+
+            bool isOnline = false;
+            var protoStatus = Proto.RoomStatus.RoomNotExisting;
+
+            return new Proto.Room() { Id = string.Empty, Name = name, Type = Proto.RoomType.Private, LastMessage = lastMessage, LastMessageDatetime = unixTimestamp, IsOnline = isOnline, PhotoUrl = photoUrl, Status = protoStatus };
+        }
+
         private Proto.RoomType covertRoomType(RoomType roomType)
         {
             switch (roomType)
@@ -424,10 +471,28 @@ namespace VcGrpcService.AppServices
             }
         }
 
-        public Room createRoom(string senderId, string receiverId, RoomType roomType)
+        public async Task<Room> createRoom(string senderId, string receiverId, RoomType roomType)
         {
+            // validate user exist 1st
+            var sender = await _userRepository.GetUserAsync(senderId);
+            if (sender == null)
+            {
+                throw new NullReferenceException("User doesn't exist");
+            }
+
+            // validate user exist 1st
+            var receiver = await _userRepository.GetUserAsync(receiverId);
+            if (receiver == null)
+            {
+                throw new NullReferenceException("User doesn't exist");
+            }
+
             string name = string.Format("{0}-{1}", senderId, receiverId);
-            return new Room() { Name = name, Type = roomType };
+            var senderRoomUser = new RoomUser() { Nickname = sender.Username, PhotoUrl = sender.PhotoUrl, Status = RoomUserStatus.InvitePending, UserId = sender.Id };
+            var receiverRoomUser = new RoomUser() { Nickname = receiver.Username, PhotoUrl = receiver.PhotoUrl, Status = RoomUserStatus.AcceptPending, UserId = receiver.Id };
+            List<RoomUser> roomUsers = new List<RoomUser>() { senderRoomUser, receiverRoomUser };
+
+            return new Room() { Name = name, Type = roomType, RoomUsers = roomUsers };
         }
 
         private Proto.JoinResponse createJoinResponseForMessage(string senderId, Proto.MessageRequest messageRequest)
@@ -450,3 +515,4 @@ namespace VcGrpcService.AppServices
 
     }
 }
+

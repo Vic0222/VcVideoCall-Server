@@ -22,6 +22,7 @@ namespace TestProject.Tests
         {
             _configuration = TestConfigurationProvider.GetConfiguration();
             _vcServerFixture = new VcServerFixture();
+            _vcServerFixture.Init();
         }
 
         [TearDown]

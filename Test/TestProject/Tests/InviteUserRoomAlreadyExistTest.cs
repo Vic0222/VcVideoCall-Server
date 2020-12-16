@@ -12,7 +12,7 @@ using VcGrpcService.Proto;
 
 namespace TestProject.Tests
 {
-    public class SearchUserTest
+    public class InviteUserRoomAlreadyExistTest
     {
         private IConfigurationRoot _configuration;
         private VcServerFixture _vcServerFixture;
@@ -22,7 +22,7 @@ namespace TestProject.Tests
         {
             _configuration = TestConfigurationProvider.GetConfiguration();
             _vcServerFixture = new VcServerFixture();
-            _vcServerFixture.Init();
+            _vcServerFixture.Init(createRoom: true);
         }
 
         [TearDown]
@@ -30,19 +30,17 @@ namespace TestProject.Tests
         {
             _vcServerFixture?.Dispose();
         }
-
         [Test]
-        public async Task ShouldRetreiveUsers()
+        public async Task ShouldReturnServerError()
         {
             var client = new Chat.ChatClient(_vcServerFixture.GrpcChannel);
             var headers = new Metadata();
             await headers.AddIdTokenAsync("user1", _configuration);
-            var response = await client.SearchUserAsync(new SearchUserRequest() { Keyword = "v.g.a" }, headers);
+            var exception = Assert.Throws<RpcException>(() => {
+                var response = client.SendInviteToUser(new InviteUserRequest() { UserId = "88Ne5eX2C6ZMsG0wZCATJnEMFWH3" }, headers);
+                
+            }, "No exception thrown");
 
-
-            Assert.AreEqual(1, response.Users.Count, "User count should only be 1.");
-            Assert.Null(response.Users.FirstOrDefault(u => u.UserId == "wUnSd3SPUhWngjOsXK83EkPVFyW2"), "User must not be able to search itself.");
-            Assert.NotNull(response.Users.FirstOrDefault(u => u.UserId == "88Ne5eX2C6ZMsG0wZCATJnEMFWH3"), "User with id 88Ne5eX2C6ZMsG0wZCATJnEMFWH3 not found.");
         }
     }
 }

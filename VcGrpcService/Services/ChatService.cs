@@ -200,5 +200,19 @@ namespace VcGrpcService.Services
                 throw;
             }
         }
+
+        public override async Task<InviteUserResponse> SendInviteToUser(InviteUserRequest request, ServerCallContext context)
+        {
+            string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
+            try
+            {
+                return await _chatAppService.SendInviteToUserAsync(senderId, request, context.CancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "User {0} sending invite to user {1}", senderId, request.UserId);
+                throw;
+            }
+        }
     }
 }
