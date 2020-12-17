@@ -37,7 +37,7 @@ namespace TestProject.Tests
             var headers = new Metadata();
             await headers.AddIdTokenAsync("user1", _configuration);
             var exception = Assert.Throws<RpcException>(() => {
-                var response = client.SendInviteToUser(new InviteUserRequest() { UserId = "88Ne5eX2C6ZMsG0wZCATJnEMFWH3" }, headers);
+                var response = client.SendUserInvite(new UserInviteRequest() { UserId = "88Ne5eX2C6ZMsG0wZCATJnEMFWH3" }, headers);
                 
             }, "No exception thrown");
 

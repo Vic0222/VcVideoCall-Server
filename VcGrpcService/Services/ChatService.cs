@@ -201,16 +201,30 @@ namespace VcGrpcService.Services
             }
         }
 
-        public override async Task<InviteUserResponse> SendInviteToUser(InviteUserRequest request, ServerCallContext context)
+        public override async Task<UserInviteResponse> SendUserInvite(UserInviteRequest request, ServerCallContext context)
         {
             string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
             try
             {
-                return await _chatAppService.SendInviteToUserAsync(senderId, request, context.CancellationToken);
+                return await _chatAppService.SendUserInvite(senderId, request, context.CancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "User {0} sending invite to user {1}", senderId, request.UserId);
+                throw;
+            }
+        }
+
+        public async override Task<UserAcceptResponse> SendUserAccept(UserAcceptRequest request, ServerCallContext context)
+        {
+            string senderId = context.GetHttpContext().User.FindFirstValue(ClaimTypes.NameIdentifier);
+            try
+            {
+                return await _chatAppService.SendUserAccept(senderId, request, context.CancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "User {0} accepting invite to room {1}", senderId, request.RoomId);
                 throw;
             }
         }

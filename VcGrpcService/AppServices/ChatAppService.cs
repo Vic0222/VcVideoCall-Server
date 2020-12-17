@@ -203,6 +203,15 @@ namespace VcGrpcService.AppServices
             return response;
         }
 
+        public async Task<Proto.UserAcceptResponse> SendUserAccept(string senderId, Proto.UserAcceptRequest request, CancellationToken cancellationToken)
+        {
+            await _roomRepository.UpdateRoomUserStatusAsync(request.RoomId, senderId, RoomUserStatus.Accepted, cancellationToken);
+
+            var room = await _roomRepository.GetRoomAsync(request.RoomId);
+            var responseRoom = await createRoomReplyAsync(senderId, room);
+            return new Proto.UserAcceptResponse() { Room = responseRoom };
+        }
+
         /// <summary>
         /// Create room with status invite/accept pending
         /// </summary>
@@ -210,7 +219,7 @@ namespace VcGrpcService.AppServices
         /// <param name="request"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<Proto.InviteUserResponse> SendInviteToUserAsync(string senderId, Proto.InviteUserRequest request, CancellationToken cancellationToken)
+        public async Task<Proto.UserInviteResponse> SendUserInvite(string senderId, Proto.UserInviteRequest request, CancellationToken cancellationToken)
         {
             //check if private room already exist
 
@@ -223,7 +232,7 @@ namespace VcGrpcService.AppServices
             room = await createRoom(senderId, request.UserId, RoomType.Private);
             room.Id = await _roomRepository.AddRoomAsync(room);
             var protoRoom = await createRoomReplyAsync(senderId, room);
-            var response = new Proto.InviteUserResponse() { Room = protoRoom };
+            var response = new Proto.UserInviteResponse() { Room = protoRoom };
             return response;
         }
 

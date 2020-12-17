@@ -66,14 +66,24 @@ namespace Vc.DAL.Mongo.Repositories
             var update = Builders<Dal.Room>.Update.Set("RoomUsers.$.PhotoUrl", photoUrl);
             if (_mongoDatabaseSessionManager?.MongoDatabaseSession?.CurrentSession != null)
             {
-                await _collection.UpdateManyAsync(_mongoDatabaseSessionManager?.MongoDatabaseSession?.CurrentSession, filter, update, options: null, cancellationToken: cancellationToken);
+                await _collection.UpdateOneAsync(_mongoDatabaseSessionManager?.MongoDatabaseSession?.CurrentSession, filter, update, options: null, cancellationToken: cancellationToken);
             }
             else
             {
-                await _collection.UpdateManyAsync(filter, update, options: null, cancellationToken: cancellationToken);
+                await _collection.UpdateOneAsync(filter, update, options: null, cancellationToken: cancellationToken);
             }
 
             
+        }
+
+        public async Task UpdateRoomUserStatusAsync(string roomId, string userId, RoomUserStatus roomUserStatus, CancellationToken cancellationToken)
+        {
+            var filter = Builders<Dal.Room>.Filter.Eq(r => r.Id, roomId);
+
+            filter = filter & Builders<Dal.Room>.Filter.ElemMatch(r => r.RoomUsers, builder => builder.UserId == userId);
+
+            var update = Builders<Dal.Room>.Update.Set("RoomUsers.$.Status", roomUserStatus);
+            await _collection.UpdateOneAsync(filter, update, options: null, cancellationToken: cancellationToken);
         }
     }
 }

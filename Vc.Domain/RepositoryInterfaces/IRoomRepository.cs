@@ -16,5 +16,6 @@ namespace Vc.Domain.RepositoryInterfaces
         Task<List<Room>> GetUserRoomsAsync(string userId);
         Task<bool> IsUserInRoomAsync(string userId, string roomId);
         Task UpdateRoomUserPhotoUrl(string userId, string photoUrl, CancellationToken cancellationToken);
+        Task UpdateRoomUserStatusAsync(string roomId, string senderId, RoomUserStatus accepted, CancellationToken cancellationToken);
     }
 }
